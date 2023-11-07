@@ -97,7 +97,6 @@ describe('V2', () => {
 
     before(async () => {
         ;[s0, founder, investor] = await ethers.getSigners()
-        console.log(s0.address, founder.address, investor.address)
     })
 
     beforeEach(async () => {
