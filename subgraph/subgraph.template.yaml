@@ -1,0 +1,67 @@
+specVersion: 0.0.5
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: TTUDeployerLite
+    network: {{network}}
+    source:
+      address: "{{address}}"
+      abi: TTUDeployerLite
+      startBlock: {{startBlock}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - TokenTableSuiteDeployed
+      abis:
+        - name: TTUDeployerLite
+          file: ../artifacts/contracts/proxy/TTUDeployerLite.sol/TTUDeployerLite.json
+        - name: TokenTableUnlockerV2
+          file: ../artifacts/contracts/core/TokenTableUnlockerV2.sol/TokenTableUnlockerV2.json
+      eventHandlers:
+        - event: TokenTableSuiteDeployed(address,string,address,address,address)
+          handler: handleTokenTableSuiteDeployed
+      file: ./src/ttu-deployer.ts
+
+templates:
+  - kind: ethereum
+    name: TokenTableUnlockerV2
+    network: {{network}}
+    source:
+      abi: TokenTableUnlockerV2
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - ActualCancelled
+        - ActualCreated
+        - Initialized
+        - OwnershipTransferred
+        - PresetCreated
+        - TokensClaimed
+        - TokensDeposited
+        - TokensWithdrawn
+      abis:
+        - name: TokenTableUnlockerV2
+          file: ../artifacts/contracts/core/TokenTableUnlockerV2.sol/TokenTableUnlockerV2.json
+      eventHandlers:
+        - event: ActualCancelled(uint256,uint256,uint256,address)
+          handler: handleActualCancelled
+        - event: ActualCreated(bytes32,uint256)
+          handler: handleActualCreated
+        - event: Initialized(uint8)
+          handler: handleInitialized
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: PresetCreated(bytes32)
+          handler: handlePresetCreated
+        - event: TokensClaimed(uint256,address,address,uint256)
+          handler: handleTokensClaimed
+        - event: TokensDeposited(uint256,uint256)
+          handler: handleTokensDeposited
+        - event: TokensWithdrawn(uint256,address,uint256)
+          handler: handleTokensWithdrawn
+      file: ./src/token-table-unlocker-v-2.ts

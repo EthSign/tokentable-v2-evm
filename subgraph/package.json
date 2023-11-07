@@ -1,0 +1,25 @@
+{
+  "name": "tokentable-v2-test",
+  "license": "UNLICENSED",
+  "scripts": {
+    "codegen": "graph codegen",
+    "build": "graph build",
+    "auth:studio": "graph auth --studio 996b20e5efcbaebd38e554b0a1aef173",
+    "deploy:zkSyncEra": "mustache config/zkSyncEra.json subgraph.template.yaml > subgraph.yaml && graph deploy --studio ttu-v2-zksync-era",
+    "deploy:zkSyncTestnet": "mustache config/zkSyncTestnet.json subgraph.template.yaml > subgraph.yaml && graph auth --product hosted-service 04be2e7033c94058856222c907f0597d && graph deploy --product hosted-service ethsign/ttu-v2-zksync-era-testnet",
+    "deploy:sepolia": "mustache config/sepolia.json subgraph.template.yaml > subgraph.yaml && graph deploy --studio ttu-v2-sepolia",
+    "deploy:bnb": "mustache config/bnb.json subgraph.template.yaml > subgraph.yaml && graph auth --product hosted-service 2dbd028e650c43f88916a295907e783e && graph deploy --product hosted-service boyuanx/ttu-v2-bnb-mainnet",
+    "deploy:polygonMumbai": "mustache config/polygonMumbai.json subgraph.template.yaml > subgraph.yaml && graph deploy --studio ttu-v2-mumbai",
+    "deploy:ethereum": "mustache config/ethereum.json subgraph.template.yaml > subgraph.yaml && graph deploy --studio ttu-v2-ethereum",
+    "deploy:mantaPacificTestnet": "mustache config/mantaPacificTestnet.json subgraph.template.yaml > subgraph.yaml && graph build && goldsky subgraph deploy ttu-v2-manta-pacific-testnet/v1.0.0",
+    "test": "graph test"
+  },
+  "dependencies": {
+    "@graphprotocol/graph-cli": "^0.59.0",
+    "@graphprotocol/graph-ts": "0.31.0",
+    "mustache": "^4.2.0"
+  },
+  "devDependencies": {
+    "matchstick-as": "0.5.0"
+  }
+}

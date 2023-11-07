@@ -1,9 +1,11 @@
 import '@nomicfoundation/hardhat-toolbox'
-import '@openzeppelin/hardhat-upgrades'
 import 'hardhat-storage-layout'
 import 'hardhat-contract-sizer'
 import 'hardhat-deploy'
 import {config} from 'dotenv'
+import '@matterlabs/hardhat-zksync-deploy'
+import '@matterlabs/hardhat-zksync-solc'
+import '@matterlabs/hardhat-zksync-verify'
 
 if (process.env.NODE_ENV !== 'PRODUCTION') {
     config()
@@ -17,13 +19,73 @@ export default {
         hardhat: {
             chainId: 33133,
             allowUnlimitedContractSize: false,
-            loggingEnabled: false
+            loggingEnabled: false,
+            zksync: false
         },
-        local: {
-            url: 'http://localhost:8545',
-            chainId: 33133,
-            allowUnlimitedContractSize: false,
-            loggingEnabled: true
+        sepolia: {
+            chainId: 11155111,
+            url: 'https://eth-sepolia.g.alchemy.com/v2/irTlUXcBaYDlCFNi9dHbjUxzm1pIfWbt',
+            accounts: [process.env.PRIVATE_KEY!],
+            saveDeployments: true,
+            zksync: false
+        },
+        goerli: {
+            chainId: 5,
+            url: 'https://ethereum-goerli.publicnode.com',
+            accounts: [process.env.PRIVATE_KEY!],
+            saveDeployments: true,
+            zksync: false
+        },
+        scrollAlpha: {
+            chainId: 534353,
+            url: 'https://alpha-rpc.scroll.io/l2',
+            accounts: [process.env.PRIVATE_KEY!],
+            saveDeployments: true,
+            zksync: false
+        },
+        mantleTestnet: {
+            chainId: 5001,
+            url: 'https://rpc.ankr.com/mantle_testnet',
+            accounts: [process.env.PRIVATE_KEY!],
+            saveDeployments: true,
+            zksync: false
+        },
+        zkSyncTestnet: {
+            chainId: 280,
+            url: 'https://testnet.era.zksync.dev',
+            ethNetwork: 'https://ethereum-goerli.publicnode.com',
+            accounts: [process.env.PRIVATE_KEY!],
+            saveDeployments: true,
+            zksync: true,
+            verifyURL:
+                'https://zksync2-testnet-explorer.zksync.dev/contract_verification'
+        },
+        zkSyncEra: {
+            chainId: 324,
+            url: 'https://mainnet.era.zksync.io',
+            ethNetwork: 'https://ethereum.publicnode.com',
+            accounts: [process.env.PRIVATE_KEY!],
+            saveDeployments: true,
+            zksync: true,
+            verifyURL:
+                'https://zksync2-mainnet-explorer.zksync.io/contract_verification'
+        },
+        baseGoerli: {
+            url: 'https://base-goerli.g.alchemy.com/v2/C9AsPfiYm2YWRnCHy5QXWDlRD3FqktoH',
+            chainId: 84531,
+            loggingEnabled: true,
+            accounts: [process.env.PRIVATE_KEY!],
+            saveDeployments: true,
+            gasPrice: 100000050,
+            zksync: false
+        },
+        bnbMainnet: {
+            url: 'https://bsc-dataseed.bnbchain.org/',
+            chainId: 56,
+            // gasPrice: 20000000000,
+            accounts: [process.env.PRIVATE_KEY!],
+            saveDeployments: true,
+            zksync: false
         },
         polygonMumbai: {
             url: 'https://rpc.ankr.com/polygon_mumbai',
@@ -32,12 +94,27 @@ export default {
             accounts: [process.env.PRIVATE_KEY!],
             saveDeployments: true,
             zksync: false
+        },
+        ethereum: {
+            url: 'https://eth-mainnet.g.alchemy.com/v2/udrqNPSB6i5n5L6QSM31Ng72h_hFOrVT',
+            chainId: 1,
+            loggingEnabled: true,
+            accounts: [process.env.PRIVATE_KEY!],
+            saveDeployments: true,
+            zksync: false
+        },
+        mantaPacificTestnet: {
+            chainId: 3441005,
+            url: 'https://pacific-rpc.testnet.manta.network/http',
+            accounts: [process.env.PRIVATE_KEY!],
+            saveDeployments: true,
+            zksync: false
         }
     },
     solidity: {
         compilers: [
             {
-                version: '0.8.20',
+                version: '0.8.17',
                 settings: {
                     optimizer: {
                         enabled: true,
@@ -46,6 +123,24 @@ export default {
                 }
             }
         ]
+    },
+    zksolc: {
+        version: '1.3.14',
+        settings: {
+            optimizer: {
+                enabled: true,
+                runs: 200
+            },
+            libraries: {
+                'contracts/libraries/Clones.sol': {
+                    /*
+                     * zkSync Era Mainnet: 0x52cb8d348604aBB1720a713eADf3e4Afef650f93
+                     * zkSync Era Testnet: 0x222C78A7CaDC3D63c72cE39F9A382B6aF075fC74
+                     */
+                    Clones: '0x222C78A7CaDC3D63c72cE39F9A382B6aF075fC74'
+                }
+            }
+        }
     },
     namedAccounts: {
         deployer: {
