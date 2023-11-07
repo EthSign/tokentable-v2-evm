@@ -5,6 +5,10 @@ import {IERC721AQueryableUpgradeable} from "erc721a-upgradeable/contracts/interf
 import {IVersionable} from "./IVersionable.sol";
 
 interface ITTFutureTokenV2 is IERC721AQueryableUpgradeable, IVersionable {
+    event DidSetBaseURI(string prevURI, string newURI);
+
+    error Unauthorized();
+
     function initialize(address projectToken, bool allowTransfer_) external;
 
     function setAuthorizedMinterSingleUse(address authorizedMinter_) external;

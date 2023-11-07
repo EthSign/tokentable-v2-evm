@@ -24,9 +24,6 @@ contract TTFutureTokenV2 is ITTFutureTokenV2, ERC721AQueryableUpgradeable {
 
     // v2.0.1
     string public baseUri;
-    event DidSetBaseURI(string prevURI, string newURI);
-
-    error Unauthorized();
 
     constructor() {
         _dummyInitialize(); // This will cause test cases to fail, comment when unit testing

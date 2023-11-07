@@ -26,4 +26,5 @@ dist
 
 # External Solidity source files
 
-/contracts/external
+contracts/external
+contracts/old

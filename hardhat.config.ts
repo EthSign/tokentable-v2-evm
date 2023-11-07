@@ -6,6 +6,7 @@ import {config} from 'dotenv'
 import '@matterlabs/hardhat-zksync-deploy'
 import '@matterlabs/hardhat-zksync-solc'
 import '@matterlabs/hardhat-zksync-verify'
+import '@openzeppelin/hardhat-upgrades'
 
 if (process.env.NODE_ENV !== 'PRODUCTION') {
     config()
@@ -137,7 +138,7 @@ export default {
                      * zkSync Era Mainnet: 0x52cb8d348604aBB1720a713eADf3e4Afef650f93
                      * zkSync Era Testnet: 0x222C78A7CaDC3D63c72cE39F9A382B6aF075fC74
                      */
-                    Clones: '0x222C78A7CaDC3D63c72cE39F9A382B6aF075fC74'
+                    Clones: '0x52cb8d348604aBB1720a713eADf3e4Afef650f93'
                 }
             }
         }

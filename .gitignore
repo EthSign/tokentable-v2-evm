@@ -3,6 +3,7 @@ artifacts
 artifacts-zk
 cache
 cache-zk
+contracts/old
 
 # TypeChain
 typechain-types

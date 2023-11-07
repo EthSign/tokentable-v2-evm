@@ -40,6 +40,7 @@
     "@nomicfoundation/hardhat-toolbox": "3.0.0",
     "@openzeppelin/contracts": "4.8.0",
     "@openzeppelin/contracts-upgradeable": "4.8.0",
+    "@openzeppelin/hardhat-upgrades": "2.3.3",
     "@types/bunyan": "^1.8.7",
     "@types/chai-as-promised": "7.1.7",
     "@types/node": "20.8.7",
