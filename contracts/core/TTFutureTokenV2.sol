@@ -30,6 +30,7 @@ contract TTFutureTokenV2 is ITTFutureTokenV2, ERC721AQueryableUpgradeable {
 
     function _dummyInitialize() internal initializerERC721A {}
 
+    // solhint-disable-next-line ordering
     function initialize(
         address projectToken,
         bool allowTransfer_
