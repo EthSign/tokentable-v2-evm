@@ -47,11 +47,13 @@ contract TTUDeployerLite is ITTUDeployer, Ownable {
         ITTTrackerTokenV2 trackerToken;
         if (disableAutoUpgrade) {
             futureToken = ITTFutureTokenV2(
-                Clones.clone(beaconManager.futureTokenBeacon().implementation())
+                Clones.clone(
+                    beaconManager.FUTURETOKEN_BEACON().implementation()
+                )
             );
             futureToken.initialize(projectToken, allowTransferableFT);
             unlocker = ITokenTableUnlockerV2(
-                Clones.clone(beaconManager.unlockerBeacon().implementation())
+                Clones.clone(beaconManager.UNLOCKER_BEACON().implementation())
             );
             unlocker.initialize(
                 projectToken,
@@ -60,7 +62,7 @@ contract TTUDeployerLite is ITTUDeployer, Ownable {
             );
             trackerToken = ITTTrackerTokenV2(
                 Clones.clone(
-                    beaconManager.trackerTokenBeacon().implementation()
+                    beaconManager.TRACKERTOKEN_BEACON().implementation()
                 )
             );
             trackerToken.initialize(address(unlocker));
@@ -68,7 +70,7 @@ contract TTUDeployerLite is ITTUDeployer, Ownable {
             futureToken = ITTFutureTokenV2(
                 address(
                     new BeaconProxy(
-                        address(beaconManager.futureTokenBeacon()),
+                        address(beaconManager.FUTURETOKEN_BEACON()),
                         abi.encodeWithSelector(
                             ITTFutureTokenV2.initialize.selector,
                             projectToken,
@@ -80,7 +82,7 @@ contract TTUDeployerLite is ITTUDeployer, Ownable {
             unlocker = ITokenTableUnlockerV2(
                 address(
                     new BeaconProxy(
-                        address(beaconManager.unlockerBeacon()),
+                        address(beaconManager.UNLOCKER_BEACON()),
                         abi.encodeWithSelector(
                             ITokenTableUnlockerV2.initialize.selector,
                             projectToken,
@@ -93,7 +95,7 @@ contract TTUDeployerLite is ITTUDeployer, Ownable {
             trackerToken = ITTTrackerTokenV2(
                 address(
                     new BeaconProxy(
-                        address(beaconManager.trackerTokenBeacon()),
+                        address(beaconManager.TRACKERTOKEN_BEACON()),
                         abi.encodeWithSelector(
                             ITTTrackerTokenV2.initialize.selector,
                             address(unlocker)
