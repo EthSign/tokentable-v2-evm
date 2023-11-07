@@ -25,28 +25,28 @@ export default {
         sepolia: {
             chainId: 11155111,
             url: 'https://eth-sepolia.g.alchemy.com/v2/irTlUXcBaYDlCFNi9dHbjUxzm1pIfWbt',
-            accounts: [process.env.PRIVATE_KEY!],
+            accounts: [process.env.PRIVATE_KEY],
             saveDeployments: true,
             zksync: false
         },
         goerli: {
             chainId: 5,
             url: 'https://ethereum-goerli.publicnode.com',
-            accounts: [process.env.PRIVATE_KEY!],
+            accounts: [process.env.PRIVATE_KEY],
             saveDeployments: true,
             zksync: false
         },
         scrollAlpha: {
             chainId: 534353,
             url: 'https://alpha-rpc.scroll.io/l2',
-            accounts: [process.env.PRIVATE_KEY!],
+            accounts: [process.env.PRIVATE_KEY],
             saveDeployments: true,
             zksync: false
         },
         mantleTestnet: {
             chainId: 5001,
             url: 'https://rpc.ankr.com/mantle_testnet',
-            accounts: [process.env.PRIVATE_KEY!],
+            accounts: [process.env.PRIVATE_KEY],
             saveDeployments: true,
             zksync: false
         },
@@ -54,7 +54,7 @@ export default {
             chainId: 280,
             url: 'https://testnet.era.zksync.dev',
             ethNetwork: 'https://ethereum-goerli.publicnode.com',
-            accounts: [process.env.PRIVATE_KEY!],
+            accounts: [process.env.PRIVATE_KEY],
             saveDeployments: true,
             zksync: true,
             verifyURL:
@@ -64,7 +64,7 @@ export default {
             chainId: 324,
             url: 'https://mainnet.era.zksync.io',
             ethNetwork: 'https://ethereum.publicnode.com',
-            accounts: [process.env.PRIVATE_KEY!],
+            accounts: [process.env.PRIVATE_KEY],
             saveDeployments: true,
             zksync: true,
             verifyURL:
@@ -74,7 +74,7 @@ export default {
             url: 'https://base-goerli.g.alchemy.com/v2/C9AsPfiYm2YWRnCHy5QXWDlRD3FqktoH',
             chainId: 84531,
             loggingEnabled: true,
-            accounts: [process.env.PRIVATE_KEY!],
+            accounts: [process.env.PRIVATE_KEY],
             saveDeployments: true,
             gasPrice: 100000050,
             zksync: false
@@ -83,7 +83,7 @@ export default {
             url: 'https://bsc-dataseed.bnbchain.org/',
             chainId: 56,
             // gasPrice: 20000000000,
-            accounts: [process.env.PRIVATE_KEY!],
+            accounts: [process.env.PRIVATE_KEY],
             saveDeployments: true,
             zksync: false
         },
@@ -91,7 +91,7 @@ export default {
             url: 'https://rpc.ankr.com/polygon_mumbai',
             chainId: 80001,
             loggingEnabled: true,
-            accounts: [process.env.PRIVATE_KEY!],
+            accounts: [process.env.PRIVATE_KEY],
             saveDeployments: true,
             zksync: false
         },
@@ -99,14 +99,14 @@ export default {
             url: 'https://eth-mainnet.g.alchemy.com/v2/udrqNPSB6i5n5L6QSM31Ng72h_hFOrVT',
             chainId: 1,
             loggingEnabled: true,
-            accounts: [process.env.PRIVATE_KEY!],
+            accounts: [process.env.PRIVATE_KEY],
             saveDeployments: true,
             zksync: false
         },
         mantaPacificTestnet: {
             chainId: 3441005,
             url: 'https://pacific-rpc.testnet.manta.network/http',
-            accounts: [process.env.PRIVATE_KEY!],
+            accounts: [process.env.PRIVATE_KEY],
             saveDeployments: true,
             zksync: false
         }
