@@ -11,8 +11,9 @@ import {ITTUFeeCollector} from "../interfaces/ITTUFeeCollector.sol";
 import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import {Clones} from "../libraries/Clones.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IVersionable} from "../interfaces/IVersionable.sol";
 
-contract TTUDeployerLite is ITTUDeployer, Ownable {
+contract TTUDeployerLite is ITTUDeployer, Ownable, IVersionable {
     TTUV2BeaconManager public beaconManager;
     ITTUFeeCollector public override feeCollector;
     mapping(string => bool) public registry;
@@ -113,5 +114,9 @@ contract TTUDeployerLite is ITTUDeployer, Ownable {
             address(trackerToken)
         );
         return (unlocker, futureToken, trackerToken);
+    }
+
+    function version() external pure returns (string memory) {
+        return "2.0.1";
     }
 }

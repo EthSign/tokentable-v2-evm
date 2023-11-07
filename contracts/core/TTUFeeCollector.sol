@@ -45,6 +45,10 @@ contract TTUFeeCollector is ITTUFeeCollector, Ownable {
         tokensCollected = (tokenTransferred * feeBips) / BIPS_PRECISION;
     }
 
+    function version() external pure returns (string memory) {
+        return "2.0.1";
+    }
+
     function transferOwnership(
         address newOwner
     ) public override(IOwnable, Ownable) {

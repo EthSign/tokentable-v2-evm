@@ -4,6 +4,7 @@ pragma solidity ^0.8.17;
 
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IVersionable} from "../interfaces/IVersionable.sol";
 
 /**
  * @title TTUV2BeaconManager
@@ -14,7 +15,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
  *
  * This contract should be deployed using TTUDeployer.
  */
-contract TTUV2BeaconManager is Ownable {
+contract TTUV2BeaconManager is Ownable, IVersionable {
     UpgradeableBeacon public immutable unlockerBeacon;
     UpgradeableBeacon public immutable futureTokenBeacon;
     UpgradeableBeacon public immutable trackerTokenBeacon;
@@ -39,5 +40,9 @@ contract TTUV2BeaconManager is Ownable {
 
     function upgradePreviewToken(address newImpl) external onlyOwner {
         trackerTokenBeacon.upgradeTo(newImpl);
+    }
+
+    function version() external pure returns (string memory) {
+        return "2.0.1";
     }
 }

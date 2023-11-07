@@ -2,13 +2,14 @@
 pragma solidity ^0.8.17;
 
 import {IOwnable} from "./IOwnable.sol";
+import {IVersionable} from "./IVersionable.sol";
 
 /**
  * @title ITTUFeeCollector
  * @author Jack Xu @ EthSign
  * @dev TTUFeeCollector handles service fee calculation.
  */
-interface ITTUFeeCollector is IOwnable {
+interface ITTUFeeCollector is IOwnable, IVersionable {
     event DefaultFeeSet(uint256 bips);
     event CustomFeeSet(address unlockerAddress, uint256 bips);
 
