@@ -15,29 +15,29 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
  * This contract should be deployed using TTUDeployer.
  */
 contract TTUV2BeaconManager is Ownable {
-    UpgradeableBeacon public immutable UNLOCKER_BEACON;
-    UpgradeableBeacon public immutable FUTURETOKEN_BEACON;
-    UpgradeableBeacon public immutable TRACKERTOKEN_BEACON;
+    UpgradeableBeacon public immutable unlockerBeacon;
+    UpgradeableBeacon public immutable futureTokenBeacon;
+    UpgradeableBeacon public immutable trackerTokenBeacon;
 
     constructor(
         address unlockerImpl,
         address futureTokenImpl,
         address trackerTokenImpl
     ) {
-        UNLOCKER_BEACON = new UpgradeableBeacon(unlockerImpl);
-        FUTURETOKEN_BEACON = new UpgradeableBeacon(futureTokenImpl);
-        TRACKERTOKEN_BEACON = new UpgradeableBeacon(trackerTokenImpl);
+        unlockerBeacon = new UpgradeableBeacon(unlockerImpl);
+        futureTokenBeacon = new UpgradeableBeacon(futureTokenImpl);
+        trackerTokenBeacon = new UpgradeableBeacon(trackerTokenImpl);
     }
 
     function upgradeUnlocker(address newImpl) external onlyOwner {
-        UNLOCKER_BEACON.upgradeTo(newImpl);
+        unlockerBeacon.upgradeTo(newImpl);
     }
 
     function upgradeFutureToken(address newImpl) external onlyOwner {
-        FUTURETOKEN_BEACON.upgradeTo(newImpl);
+        futureTokenBeacon.upgradeTo(newImpl);
     }
 
     function upgradePreviewToken(address newImpl) external onlyOwner {
-        TRACKERTOKEN_BEACON.upgradeTo(newImpl);
+        trackerTokenBeacon.upgradeTo(newImpl);
     }
 }
