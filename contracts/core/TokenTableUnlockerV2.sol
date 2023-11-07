@@ -487,6 +487,10 @@ contract TokenTableUnlockerV2 is
             );
     }
 
+    function version() external pure returns (string memory) {
+        return "2.0.1";
+    }
+
     function calculateAmountClaimable(
         uint256 actualId
     )

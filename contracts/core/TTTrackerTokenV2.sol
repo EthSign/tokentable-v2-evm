@@ -107,4 +107,8 @@ contract TTTrackerTokenV2 is ITTTrackerTokenV2, IERC20Metadata, Initializable {
     ) external returns (bool) {
         return false;
     }
+
+    function version() external pure returns (string memory) {
+        return "2.0.1";
+    }
 }

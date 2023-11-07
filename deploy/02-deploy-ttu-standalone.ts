@@ -16,4 +16,4 @@ const deployTTUV2: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 }
 
 export default deployTTUV2
-deployTTUV2.tags = ['all', 'TTUV2']
+deployTTUV2.tags = ['TTUV2']

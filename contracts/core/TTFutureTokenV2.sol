@@ -22,6 +22,10 @@ contract TTFutureTokenV2 is ITTFutureTokenV2, ERC721AQueryableUpgradeable {
     address public authorizedMinter;
     bool public allowTransfer;
 
+    // v2.0.1
+    string public baseUri;
+    event DidSetBaseURI(string prevURI, string newURI);
+
     error Unauthorized();
 
     constructor() {
@@ -62,7 +66,7 @@ contract TTFutureTokenV2 is ITTFutureTokenV2, ERC721AQueryableUpgradeable {
      * token with tokenId == actualId is minted.
      */
     function safeMint(address to) external override returns (uint256 tokenId) {
-        if (msg.sender != authorizedMinter) revert Unauthorized();
+        if (_msgSenderERC721A() != authorizedMinter) revert Unauthorized();
         tokenId = _nextTokenId();
         _safeMint(to, 1);
     }
@@ -90,6 +94,15 @@ contract TTFutureTokenV2 is ITTFutureTokenV2, ERC721AQueryableUpgradeable {
     ) public payable virtual override(ERC721AUpgradeable, IERC721AUpgradeable) {
         if (!allowTransfer) revert Unauthorized();
         super.safeTransferFrom(from, to, tokenId, _data);
+    }
+
+    function setURI(string calldata uri) external {
+        if (
+            _msgSenderERC721A() !=
+            ITokenTableUnlockerV2(authorizedMinter).owner()
+        ) revert Unauthorized();
+        emit DidSetBaseURI(baseUri, uri);
+        baseUri = uri;
     }
 
     /**
@@ -120,5 +133,13 @@ contract TTFutureTokenV2 is ITTFutureTokenV2, ERC721AQueryableUpgradeable {
         deltaAmountClaimable = deltaAmountClaimable_;
         amountAlreadyClaimed = updatedAmountClaimed_ - deltaAmountClaimable_;
         isCancelable = ITokenTableUnlockerV2(authorizedMinter).isCancelable();
+    }
+
+    function version() external pure override returns (string memory) {
+        return "2.0.1";
+    }
+
+    function _baseURI() internal view virtual override returns (string memory) {
+        return baseUri;
     }
 }

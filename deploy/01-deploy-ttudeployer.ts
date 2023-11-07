@@ -18,4 +18,4 @@ const deployTTUDeployer: DeployFunction = async (
 }
 
 export default deployTTUDeployer
-deployTTUDeployer.tags = ['all', 'TTUDeployer']
+deployTTUDeployer.tags = ['TTUDeployer']

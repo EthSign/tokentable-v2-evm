@@ -2,6 +2,7 @@
 pragma solidity ^0.8.17;
 
 import {IOwnable} from "./IOwnable.sol";
+import {IVersionable} from "./IVersionable.sol";
 
 /**
  * @title ITokenTableUnlockerV2
@@ -9,7 +10,7 @@ import {IOwnable} from "./IOwnable.sol";
  * @dev The lightweight interface for TokenTableUnlockerV2, which handles token
  * unlocking and distribution for TokenTable.
  */
-abstract contract ITokenTableUnlockerV2 is IOwnable {
+abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
     event PresetCreated(bytes32 presetId);
     event ActualCreated(bytes32 presetId, uint256 actualId);
     event TokensDeposited(uint256 actualId, uint256 amount);
