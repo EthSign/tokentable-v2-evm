@@ -37,7 +37,6 @@ async function tt() {
 }
 
 async function main() {
-    await ttu()
     await ft()
 }
 
