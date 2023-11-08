@@ -110,6 +110,13 @@ export default {
             accounts: [process.env.PRIVATE_KEY],
             saveDeployments: true,
             zksync: false
+        },
+        mantaPacific: {
+            chainId: 169,
+            url: 'https://pacific-rpc.manta.network/http',
+            accounts: [process.env.PRIVATE_KEY],
+            saveDeployments: true,
+            zksync: false
         }
     },
     solidity: {
@@ -150,7 +157,28 @@ export default {
     },
     etherscan: {
         apiKey: {
-            polygonMumbai: process.env.POLYGONSCAN_KEY
-        }
+            polygonMumbai: process.env.POLYGONSCAN_KEY,
+            mantaPacific: process.env.MANTAPACIFIC_KEY,
+            mantaPacificTestnet: process.env.MANTAPACIFIC_TEST_KEY
+        },
+        customChains: [
+            {
+                network: 'mantaPacific',
+                chainId: 169,
+                urls: {
+                    apiURL: 'https://manta-pacific.calderaexplorer.xyz/api',
+                    browserURL: 'https://pacific-explorer.manta.network/'
+                }
+            },
+            {
+                network: 'mantaPacificTestnet',
+                chainId: 3441005,
+                urls: {
+                    apiURL: 'https://pacific-explorer.testnet.manta.network/api',
+                    browserURL:
+                        'https://pacific-explorer.testnet.manta.network/'
+                }
+            }
+        ]
     }
 }

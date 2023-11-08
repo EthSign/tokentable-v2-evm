@@ -12,6 +12,7 @@
     "deploy:polygonMumbai": "mustache config/polygonMumbai.json subgraph.template.yaml > subgraph.yaml && graph deploy --studio ttu-v2-mumbai",
     "deploy:ethereum": "mustache config/ethereum.json subgraph.template.yaml > subgraph.yaml && graph deploy --studio ttu-v2-ethereum",
     "deploy:mantaPacificTestnet": "mustache config/mantaPacificTestnet.json subgraph.template.yaml > subgraph.yaml && graph build && goldsky subgraph deploy ttu-v2-manta-pacific-testnet/v1.0.0",
+    "deploy:mantaPacific": "mustache config/mantaPacific.json subgraph.template.yaml > subgraph.yaml && graph build && goldsky subgraph deploy ttu-v2-manta-pacific/v1.0.0",
     "test": "graph test"
   },
   "dependencies": {
