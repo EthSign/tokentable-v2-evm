@@ -117,6 +117,13 @@ export default {
             accounts: [process.env.PRIVATE_KEY],
             saveDeployments: true,
             zksync: false
+        },
+        avaxC: {
+            chainId: 43114,
+            url: 'https://rpc.ankr.com/avalanche',
+            accounts: [process.env.PRIVATE_KEY],
+            saveDeployments: true,
+            zksync: false
         }
     },
     solidity: {
@@ -159,7 +166,8 @@ export default {
         apiKey: {
             polygonMumbai: process.env.POLYGONSCAN_KEY,
             mantaPacific: process.env.MANTAPACIFIC_KEY,
-            mantaPacificTestnet: process.env.MANTAPACIFIC_TEST_KEY
+            mantaPacificTestnet: process.env.MANTAPACIFIC_TEST_KEY,
+            avaxC: process.env.SNOWTRACE_KEY
         },
         customChains: [
             {
@@ -177,6 +185,14 @@ export default {
                     apiURL: 'https://pacific-explorer.testnet.manta.network/api',
                     browserURL:
                         'https://pacific-explorer.testnet.manta.network/'
+                }
+            },
+            {
+                network: 'avaxC',
+                chainId: 43114,
+                urls: {
+                    apiURL: 'https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan',
+                    browserURL: 'https://avascan.info/'
                 }
             }
         ]
