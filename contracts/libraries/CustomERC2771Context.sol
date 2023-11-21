@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
+// Based on OpenZeppelin Contracts (last updated v4.7.0) (metatx/ERC2771Context.sol)
 pragma solidity ^0.8.17;
 
 abstract contract CustomERC2771Context {
