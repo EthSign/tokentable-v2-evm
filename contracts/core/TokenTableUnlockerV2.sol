@@ -488,7 +488,7 @@ contract TokenTableUnlockerV2 is
     }
 
     function version() external pure returns (string memory) {
-        return "2.0.1";
+        return "2.0.2";
     }
 
     function calculateAmountClaimable(
@@ -546,6 +546,8 @@ contract TokenTableUnlockerV2 is
                     latestIncompleteLinearIndex
                 ];
         }
+        if (latestIncompleteLinearDuration == 0)
+            latestIncompleteLinearDuration = 1;
         uint256 latestIncompleteLinearIntervalForEachUnlock = latestIncompleteLinearDuration /
                 preset.numOfUnlocksForEachLinear[latestIncompleteLinearIndex];
         uint256 latestIncompleteLinearClaimableTimestampRelative = claimTimestampRelative -

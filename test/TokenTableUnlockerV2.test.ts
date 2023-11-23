@@ -66,6 +66,9 @@ const calculateAmountOfTokensToClaimAtTimestamp = (
             linearStartTimestampsRelative[latestIncompleteLinearIndex + 1] -
             linearStartTimestampsRelative[latestIncompleteLinearIndex]
     }
+    if (latestIncompleteLinearDuration === 0) {
+        latestIncompleteLinearDuration = 1
+    }
     const latestIncompleteLinearIntervalForEachUnlock =
         latestIncompleteLinearDuration /
         numOfUnlocksForEachLinear[latestIncompleteLinearIndex]
