@@ -41,6 +41,9 @@ const calculateAmountOfTokensToClaimAtTimestamp = (
             linearStartTimestampsRelative[latestIncompleteLinearIndex]
     }
     if (latestIncompleteLinearDuration == 0n) latestIncompleteLinearDuration++
+
+    const precisionDecimals = 10n ** 5n
+
     const latestIncompleteLinearIntervalForEachUnlock =
         latestIncompleteLinearDuration /
         numOfUnlocksForEachLinear[latestIncompleteLinearIndex]
@@ -49,13 +52,14 @@ const calculateAmountOfTokensToClaimAtTimestamp = (
         claimTimestampRelative -
         linearStartTimestampsRelative[latestIncompleteLinearIndex]
     const numOfClaimableUnlocksInIncompleteLinear =
-        latestIncompleteLinearClaimableTimestampRelative /
+        (latestIncompleteLinearClaimableTimestampRelative * precisionDecimals) /
         latestIncompleteLinearIntervalForEachUnlock
 
     const latestIncompleteLinearClaimableBips =
         (linearBips[latestIncompleteLinearIndex] *
             numOfClaimableUnlocksInIncompleteLinear) /
-        numOfUnlocksForEachLinear[latestIncompleteLinearIndex]
+        numOfUnlocksForEachLinear[latestIncompleteLinearIndex] /
+        precisionDecimals
 
     claimableBips += latestIncompleteLinearClaimableBips
     if (claimableBips > bipsPrecision) {
@@ -66,14 +70,14 @@ const calculateAmountOfTokensToClaimAtTimestamp = (
 }
 
 const result = calculateAmountOfTokensToClaimAtTimestamp(
-    1698044400n,
-    126230400n,
-    [0n, 126230400n],
-    1698044400n + 126230300n,
+    0n,
+    100n,
+    [0n, 100n],
+    12n,
     [10000n, 0n],
-    [48n, 1n],
+    [3n, 1n],
     10000n,
-    300000000000n
+    100n
 )
 
 console.log(result)

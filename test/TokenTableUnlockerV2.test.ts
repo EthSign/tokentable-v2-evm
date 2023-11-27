@@ -1,3 +1,4 @@
+/* eslint-disable multiline-comment-style */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
@@ -21,20 +22,20 @@ import {setNextBlockTimestamp} from '@nomicfoundation/hardhat-network-helpers/di
 
 chai.use(chaiAsPromised)
 
-const randomIntegerBetween = (min: number, max: number): number =>
-    Math.floor(Math.random() * (max - min + 1)) + min
+const randomIntegerBetween = (min: bigint, max: bigint): bigint =>
+    BigInt(Math.floor(Math.random() * Number(max - min + 1n))) + min
 
 const calculateAmountOfTokensToClaimAtTimestamp = (
-    startTimestampAbsolute: number,
-    endTimestampRelative: number,
-    linearStartTimestampsRelative: number[],
-    claimTimestampAbsolute: number,
-    linearBips: number[],
-    numOfUnlocksForEachLinear: number[],
-    bipsPrecision: number,
-    totalAmount: number
-): number => {
-    let claimableBips = 0
+    startTimestampAbsolute: bigint,
+    endTimestampRelative: bigint,
+    linearStartTimestampsRelative: bigint[],
+    claimTimestampAbsolute: bigint,
+    linearBips: bigint[],
+    numOfUnlocksForEachLinear: bigint[],
+    bipsPrecision: bigint,
+    totalAmount: bigint
+): bigint => {
+    let claimableBips = 0n
     const claimTimestampRelative =
         claimTimestampAbsolute - startTimestampAbsolute
     let latestIncompleteLinearIndex = 0
@@ -51,7 +52,7 @@ const calculateAmountOfTokensToClaimAtTimestamp = (
         claimableBips += linearBips[i]
     }
     // 2. calculate incomplete linear index claimable in bips
-    let latestIncompleteLinearDuration = 0
+    let latestIncompleteLinearDuration = 0n
     if (
         latestIncompleteLinearIndex ===
         linearStartTimestampsRelative.length - 1
@@ -66,23 +67,25 @@ const calculateAmountOfTokensToClaimAtTimestamp = (
             linearStartTimestampsRelative[latestIncompleteLinearIndex + 1] -
             linearStartTimestampsRelative[latestIncompleteLinearIndex]
     }
-    if (latestIncompleteLinearDuration === 0) {
-        latestIncompleteLinearDuration = 1
+    if (latestIncompleteLinearDuration === 0n) {
+        latestIncompleteLinearDuration = 1n
     }
+    const precisionDecimals = 10n ** 10n
+
     const latestIncompleteLinearIntervalForEachUnlock =
         latestIncompleteLinearDuration /
         numOfUnlocksForEachLinear[latestIncompleteLinearIndex]
     const latestIncompleteLinearClaimableTimestampRelative =
         claimTimestampRelative -
         linearStartTimestampsRelative[latestIncompleteLinearIndex]
-    const numOfClaimableUnlocksInIncompleteLinear = Math.floor(
-        latestIncompleteLinearClaimableTimestampRelative /
-            latestIncompleteLinearIntervalForEachUnlock
-    )
+    const numOfClaimableUnlocksInIncompleteLinear =
+        (latestIncompleteLinearClaimableTimestampRelative * precisionDecimals) /
+        latestIncompleteLinearIntervalForEachUnlock
     const latestIncompleteLinearClaimableBips =
         (linearBips[latestIncompleteLinearIndex] *
             numOfClaimableUnlocksInIncompleteLinear) /
-        numOfUnlocksForEachLinear[latestIncompleteLinearIndex]
+        numOfUnlocksForEachLinear[latestIncompleteLinearIndex] /
+        precisionDecimals
 
     claimableBips += latestIncompleteLinearClaimableBips
     if (claimableBips > bipsPrecision) {
@@ -117,17 +120,17 @@ describe('V2', () => {
     describe('Unlocker', () => {
         let unlocker: TokenTableUnlockerV2
 
-        const BIPS_PRECISION = 10 ** 4,
+        const BIPS_PRECISION = 10n ** 4n,
             presetId = id('PRESET 1'),
-            linearStartTimestampsRelative = [0, 10, 11, 30, 31, 60, 100],
-            linearEndTimestampRelative = 400,
-            linearBips = [0, 1000, 0, 2000, 0, 4000, 3000],
-            numOfUnlocksForEachLinear = [1, 1, 1, 1, 1, 4, 3],
+            linearStartTimestampsRelative = [0n, 10n, 11n, 30n, 31n, 60n, 100n],
+            linearEndTimestampRelative = 400n,
+            linearBips = [0n, 1000n, 0n, 2000n, 0n, 4000n, 3000n],
+            numOfUnlocksForEachLinear = [1n, 1n, 1n, 1n, 1n, 4n, 3n],
             totalAmount = BIPS_PRECISION
 
-        let startTimestampAbsolute: number,
-            amountSkipped: number,
-            amountDepositingNow: number
+        let startTimestampAbsolute: bigint,
+            amountSkipped: bigint,
+            amountDepositingNow: bigint
 
         beforeEach(async () => {
             unlocker = await ethers.deployContract('TokenTableUnlockerV2', s0)
@@ -145,9 +148,9 @@ describe('V2', () => {
                 .connect(founder)
                 .approve(await unlocker.getAddress(), BIPS_PRECISION)
             await unlocker.transferOwnership(founder.address)
-            startTimestampAbsolute = Math.round(Date.now() / 1000) + 20
-            amountSkipped = 0
-            amountDepositingNow = totalAmount / 2
+            startTimestampAbsolute = BigInt(Date.now()) / 1000n + 20n
+            amountSkipped = 0n
+            amountDepositingNow = totalAmount / 2n
         })
 
         describe('Core', () => {
@@ -342,7 +345,7 @@ describe('V2', () => {
                 await expect(
                     unlocker
                         .connect(founder)
-                        .withdrawDeposit(actualId, totalAmount + 1)
+                        .withdrawDeposit(actualId, totalAmount + 1n)
                 ).to.be.revertedWithPanic('0x11')
 
                 const balanceOfFounderBefore = await projectToken.balanceOf(
@@ -365,7 +368,7 @@ describe('V2', () => {
 
             describe('should calculate the correct claimable amount', () => {
                 const validateOnChainResults = async (
-                    timeSkipped: number,
+                    timeSkipped: bigint,
                     actualId: bigint
                 ) => {
                     await time.setNextBlockTimestamp(
@@ -406,7 +409,7 @@ describe('V2', () => {
                     let actualId: bigint
 
                     beforeEach(async () => {
-                        amountSkipped = 0
+                        amountSkipped = 0n
                         await unlocker
                             .connect(founder)
                             .createActual(
@@ -430,11 +433,11 @@ describe('V2', () => {
 
                     it('random timestamps', async () => {
                         const randomTimestamps = Array.from({length: 50}, () =>
-                            randomIntegerBetween(0, 500)
+                            randomIntegerBetween(0n, 500n)
                         )
                         const randomUniqueTimestamps = [
                             ...new Set(randomTimestamps)
-                        ].sort((a, b) => a - b)
+                        ].sort((a, b) => Number(a - b))
                         for (const timeSkipped of randomUniqueTimestamps) {
                             await validateOnChainResults(timeSkipped, actualId)
                         }
@@ -445,7 +448,7 @@ describe('V2', () => {
                     let actualId: bigint
 
                     beforeEach(async () => {
-                        amountSkipped = randomIntegerBetween(0, BIPS_PRECISION)
+                        amountSkipped = randomIntegerBetween(0n, BIPS_PRECISION)
                         console.log(
                             `           Random amount skipped: ${amountSkipped}`
                         )
@@ -472,11 +475,11 @@ describe('V2', () => {
 
                     it('random timestamps', async () => {
                         const randomTimestamps = Array.from({length: 50}, () =>
-                            randomIntegerBetween(0, 500)
+                            randomIntegerBetween(0n, 500n)
                         )
                         const randomUniqueTimestamps = [
                             ...new Set(randomTimestamps)
-                        ].sort((a, b) => a - b)
+                        ].sort((a, b) => Number(a - b))
                         for (const timeSkipped of randomUniqueTimestamps) {
                             await validateOnChainResults(timeSkipped, actualId)
                         }
@@ -485,7 +488,7 @@ describe('V2', () => {
             })
 
             it('should let investor claim the correct amount', async () => {
-                amountDepositingNow = 0
+                amountDepositingNow = 0n
                 await unlocker
                     .connect(founder)
                     .createPreset(
@@ -509,7 +512,7 @@ describe('V2', () => {
                     await futureToken.tokensOfOwner(investor.address)
                 )[0]
                 let deltaAmountClaimable,
-                    amountClaimed = 0,
+                    amountClaimed = 0n,
                     balanceBefore,
                     balanceAfter,
                     claimTimestampAbsolute =
@@ -561,7 +564,7 @@ describe('V2', () => {
                 claimTimestampAbsolute =
                     startTimestampAbsolute + linearStartTimestampsRelative[5]
                 await setNextBlockTimestamp(claimTimestampAbsolute)
-                await mine()
+                // await mine()
                 deltaAmountClaimable =
                     calculateAmountOfTokensToClaimAtTimestamp(
                         startTimestampAbsolute,
@@ -595,7 +598,7 @@ describe('V2', () => {
                 claimTimestampAbsolute =
                     startTimestampAbsolute + linearStartTimestampsRelative[6]
                 await setNextBlockTimestamp(claimTimestampAbsolute)
-                await mine()
+                // await mine()
                 deltaAmountClaimable =
                     calculateAmountOfTokensToClaimAtTimestamp(
                         startTimestampAbsolute,
@@ -627,9 +630,9 @@ describe('V2', () => {
                 )
                 // Time jump to after unlocking is finished
                 claimTimestampAbsolute =
-                    startTimestampAbsolute + linearEndTimestampRelative + 100
+                    startTimestampAbsolute + linearEndTimestampRelative + 100n
                 await setNextBlockTimestamp(claimTimestampAbsolute)
-                await mine()
+                // await mine()
                 deltaAmountClaimable =
                     calculateAmountOfTokensToClaimAtTimestamp(
                         startTimestampAbsolute,
@@ -692,7 +695,7 @@ describe('V2', () => {
                 let claimTimestampAbsolute =
                     startTimestampAbsolute + linearStartTimestampsRelative[2]
                 await setNextBlockTimestamp(claimTimestampAbsolute)
-                await mine()
+                // await mine()
                 const amountSentToInvestor =
                     calculateAmountOfTokensToClaimAtTimestamp(
                         startTimestampAbsolute,
@@ -709,7 +712,7 @@ describe('V2', () => {
                 claimTimestampAbsolute =
                     startTimestampAbsolute + linearStartTimestampsRelative[5]
                 await setNextBlockTimestamp(claimTimestampAbsolute)
-                await mine()
+                // await mine()
                 const amountShouldSendToInvestor =
                     calculateAmountOfTokensToClaimAtTimestamp(
                         startTimestampAbsolute,
@@ -749,6 +752,7 @@ describe('V2', () => {
                     )
             })
 
+            /**
             it('debug', async () => {
                 const presetIdDebug =
                     '0x8d61cd4af1543185657c1e7505cdbd081a06053ebdce17a4edc137f270aeed9c'
@@ -756,9 +760,9 @@ describe('V2', () => {
                 const linearEndTimestampRelativeDebug = 31536001
                 const linearBipsDebug = [0, 10000]
                 const numOfUnlocksForEachLinearDebug = [1, 1]
-                const amountSkippedDebug = 0
-                const totalAmountDebug = '500000000000000000000'
-                const amountDepositingNowDebug = 0
+                const amountSkippedDebug = 0n
+                const totalAmountDebug = 500000000000000000000n
+                const amountDepositingNowDebug = 0n
                 await unlocker
                     .connect(founder)
                     .createPreset(
@@ -789,6 +793,7 @@ describe('V2', () => {
                     .connect(founder)
                     .cancel(actualIdDebug, founder.address)
             })
+             */
         })
 
         describe('PreviewToken', () => {
@@ -836,7 +841,7 @@ describe('V2', () => {
                 await setNextBlockTimestamp(
                     startTimestampAbsolute +
                         linearStartTimestampsRelative[
-                            randomIntegerBetween(0, 3)
+                            Number(randomIntegerBetween(0n, 3n))
                         ]
                 )
                 await mine()
@@ -854,7 +859,7 @@ describe('V2', () => {
                 await setNextBlockTimestamp(
                     startTimestampAbsolute +
                         linearStartTimestampsRelative[
-                            randomIntegerBetween(4, 6)
+                            Number(randomIntegerBetween(4n, 6n))
                         ]
                 )
                 await mine()
@@ -878,9 +883,9 @@ describe('V2', () => {
                     await ethers.getContractFactory('TTUDeployer')
                 deployer = await DeployerFactory.deploy()
                 await projectToken.mint(founder.address, BIPS_PRECISION)
-                startTimestampAbsolute = Math.round(Date.now() / 1000) + 20
-                amountSkipped = 0
-                amountDepositingNow = totalAmount / 2
+                startTimestampAbsolute = BigInt(Date.now()) / 1000n + 20n
+                amountSkipped = 0n
+                amountDepositingNow = totalAmount / 2n
             })
 
             it('should deploy suite and complete beacon upgrade', async () => {
@@ -955,7 +960,9 @@ describe('V2', () => {
                 // Time skip
                 const newStartTimestampAbsolute =
                     startTimestampAbsolute +
-                    linearStartTimestampsRelative[randomIntegerBetween(0, 3)]
+                    linearStartTimestampsRelative[
+                        Number(randomIntegerBetween(0n, 3n))
+                    ]
                 await setNextBlockTimestamp(newStartTimestampAbsolute)
                 await mine()
                 const ttuDeltaClaimables =
@@ -983,7 +990,7 @@ describe('V2', () => {
                         .createActual(
                             investor.address,
                             presetId,
-                            newStartTimestampAbsolute * 2,
+                            newStartTimestampAbsolute * 2n,
                             amountSkipped,
                             totalAmount,
                             0
@@ -1066,7 +1073,9 @@ describe('V2', () => {
                 // Time skip
                 const newStartTimestampAbsolute =
                     startTimestampAbsolute +
-                    linearStartTimestampsRelative[randomIntegerBetween(0, 3)]
+                    linearStartTimestampsRelative[
+                        Number(randomIntegerBetween(0n, 3n))
+                    ]
                 await setNextBlockTimestamp(newStartTimestampAbsolute)
                 await mine()
                 // Clone
@@ -1095,7 +1104,7 @@ describe('V2', () => {
                     .createActual(
                         investor.address,
                         presetId,
-                        newStartTimestampAbsolute * 2,
+                        newStartTimestampAbsolute * 2n,
                         amountSkipped,
                         totalAmount,
                         0

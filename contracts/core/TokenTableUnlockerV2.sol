@@ -488,7 +488,7 @@ contract TokenTableUnlockerV2 is
     }
 
     function version() external pure returns (string memory) {
-        return "2.0.2";
+        return "2.0.3";
     }
 
     function calculateAmountClaimable(
@@ -548,18 +548,21 @@ contract TokenTableUnlockerV2 is
         }
         if (latestIncompleteLinearDuration == 0)
             latestIncompleteLinearDuration = 1;
+        uint256 precisionDecimals = 10 ** 10;
         uint256 latestIncompleteLinearIntervalForEachUnlock = latestIncompleteLinearDuration /
                 preset.numOfUnlocksForEachLinear[latestIncompleteLinearIndex];
         uint256 latestIncompleteLinearClaimableTimestampRelative = claimTimestampRelative -
                 preset.linearStartTimestampsRelative[
                     latestIncompleteLinearIndex
                 ];
-        uint256 numOfClaimableUnlocksInIncompleteLinear = latestIncompleteLinearClaimableTimestampRelative /
+        uint256 numOfClaimableUnlocksInIncompleteLinear = (latestIncompleteLinearClaimableTimestampRelative *
+                precisionDecimals) /
                 latestIncompleteLinearIntervalForEachUnlock;
         updatedAmountClaimed +=
             (preset.linearBips[latestIncompleteLinearIndex] *
                 numOfClaimableUnlocksInIncompleteLinear) /
-            preset.numOfUnlocksForEachLinear[latestIncompleteLinearIndex];
+            preset.numOfUnlocksForEachLinear[latestIncompleteLinearIndex] /
+            precisionDecimals;
         updatedAmountClaimed =
             (updatedAmountClaimed * actual.totalAmount) /
             BIPS_PRECISION;
