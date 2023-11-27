@@ -500,6 +500,7 @@ contract TokenTableUnlockerV2 is
         override
         returns (uint256 deltaAmountClaimable, uint256 updatedAmountClaimed)
     {
+        uint256 precisionDecimals = 10 ** 10;
         UnlockingScheduleActual memory actual = unlockingScheduleActuals[
             actualId
         ];
@@ -524,7 +525,7 @@ contract TokenTableUnlockerV2 is
         }
         // 1. calculate completed linear index claimables in bips
         for (i = 0; i < latestIncompleteLinearIndex; i++) {
-            updatedAmountClaimed += preset.linearBips[i];
+            updatedAmountClaimed += preset.linearBips[i] * precisionDecimals;
         }
         // 2. calculate incomplete linear index claimable in bips
         uint256 latestIncompleteLinearDuration = 0;
@@ -548,7 +549,6 @@ contract TokenTableUnlockerV2 is
         }
         if (latestIncompleteLinearDuration == 0)
             latestIncompleteLinearDuration = 1;
-        uint256 precisionDecimals = 10 ** 10;
         uint256 latestIncompleteLinearIntervalForEachUnlock = latestIncompleteLinearDuration /
                 preset.numOfUnlocksForEachLinear[latestIncompleteLinearIndex];
         uint256 latestIncompleteLinearClaimableTimestampRelative = claimTimestampRelative -
@@ -560,12 +560,14 @@ contract TokenTableUnlockerV2 is
                 latestIncompleteLinearIntervalForEachUnlock;
         updatedAmountClaimed +=
             (preset.linearBips[latestIncompleteLinearIndex] *
+                precisionDecimals *
                 numOfClaimableUnlocksInIncompleteLinear) /
             preset.numOfUnlocksForEachLinear[latestIncompleteLinearIndex] /
             precisionDecimals;
         updatedAmountClaimed =
             (updatedAmountClaimed * actual.totalAmount) /
-            BIPS_PRECISION;
+            BIPS_PRECISION /
+            precisionDecimals;
         if (updatedAmountClaimed > actual.totalAmount) {
             updatedAmountClaimed = actual.totalAmount;
         }

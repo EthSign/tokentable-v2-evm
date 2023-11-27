@@ -8,6 +8,7 @@ const calculateAmountOfTokensToClaimAtTimestamp = (
     bipsPrecision: bigint,
     totalAmount: bigint
 ): bigint => {
+    const precisionDecimals = 10n ** 10n
     let claimableBips = 0n
     const claimTimestampRelative =
         claimTimestampAbsolute - startTimestampAbsolute
@@ -22,7 +23,7 @@ const calculateAmountOfTokensToClaimAtTimestamp = (
     }
     // 1. calculate completed linear index claimables in bips
     for (let i = 0; i < latestIncompleteLinearIndex; i++) {
-        claimableBips += linearBips[i]
+        claimableBips += linearBips[i] * precisionDecimals
     }
     // 2. calculate incomplete linear index claimable in bips
     let latestIncompleteLinearDuration = 0n
@@ -42,8 +43,6 @@ const calculateAmountOfTokensToClaimAtTimestamp = (
     }
     if (latestIncompleteLinearDuration == 0n) latestIncompleteLinearDuration++
 
-    const precisionDecimals = 10n ** 5n
-
     const latestIncompleteLinearIntervalForEachUnlock =
         latestIncompleteLinearDuration /
         numOfUnlocksForEachLinear[latestIncompleteLinearIndex]
@@ -57,27 +56,28 @@ const calculateAmountOfTokensToClaimAtTimestamp = (
 
     const latestIncompleteLinearClaimableBips =
         (linearBips[latestIncompleteLinearIndex] *
+            precisionDecimals *
             numOfClaimableUnlocksInIncompleteLinear) /
         numOfUnlocksForEachLinear[latestIncompleteLinearIndex] /
         precisionDecimals
 
     claimableBips += latestIncompleteLinearClaimableBips
-    if (claimableBips > bipsPrecision) {
-        claimableBips = bipsPrecision
+    if (claimableBips > bipsPrecision * precisionDecimals) {
+        claimableBips = bipsPrecision * precisionDecimals
     }
 
-    return (claimableBips * totalAmount) / bipsPrecision
+    return (claimableBips * totalAmount) / bipsPrecision / precisionDecimals
 }
 
 const result = calculateAmountOfTokensToClaimAtTimestamp(
     0n,
-    100n,
-    [0n, 100n],
-    12n,
+    126240000n,
+    [0n, 126240000n],
+    2630000n * 1n + 1n,
     [10000n, 0n],
-    [3n, 1n],
+    [48n, 1n],
     10000n,
-    100n
+    566666n
 )
 
 console.log(result)

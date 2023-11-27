@@ -35,6 +35,7 @@ const calculateAmountOfTokensToClaimAtTimestamp = (
     bipsPrecision: bigint,
     totalAmount: bigint
 ): bigint => {
+    const precisionDecimals = 10n ** 10n
     let claimableBips = 0n
     const claimTimestampRelative =
         claimTimestampAbsolute - startTimestampAbsolute
@@ -49,7 +50,7 @@ const calculateAmountOfTokensToClaimAtTimestamp = (
     }
     // 1. calculate completed linear index claimables in bips
     for (let i = 0; i < latestIncompleteLinearIndex; i++) {
-        claimableBips += linearBips[i]
+        claimableBips += linearBips[i] * precisionDecimals
     }
     // 2. calculate incomplete linear index claimable in bips
     let latestIncompleteLinearDuration = 0n
@@ -70,29 +71,31 @@ const calculateAmountOfTokensToClaimAtTimestamp = (
     if (latestIncompleteLinearDuration === 0n) {
         latestIncompleteLinearDuration = 1n
     }
-    const precisionDecimals = 10n ** 10n
 
     const latestIncompleteLinearIntervalForEachUnlock =
         latestIncompleteLinearDuration /
         numOfUnlocksForEachLinear[latestIncompleteLinearIndex]
+
     const latestIncompleteLinearClaimableTimestampRelative =
         claimTimestampRelative -
         linearStartTimestampsRelative[latestIncompleteLinearIndex]
     const numOfClaimableUnlocksInIncompleteLinear =
         (latestIncompleteLinearClaimableTimestampRelative * precisionDecimals) /
         latestIncompleteLinearIntervalForEachUnlock
+
     const latestIncompleteLinearClaimableBips =
         (linearBips[latestIncompleteLinearIndex] *
+            precisionDecimals *
             numOfClaimableUnlocksInIncompleteLinear) /
         numOfUnlocksForEachLinear[latestIncompleteLinearIndex] /
         precisionDecimals
 
     claimableBips += latestIncompleteLinearClaimableBips
-    if (claimableBips > bipsPrecision) {
-        claimableBips = bipsPrecision
+    if (claimableBips > bipsPrecision * precisionDecimals) {
+        claimableBips = bipsPrecision * precisionDecimals
     }
 
-    return (claimableBips * totalAmount) / bipsPrecision
+    return (claimableBips * totalAmount) / bipsPrecision / precisionDecimals
 }
 
 describe('V2', () => {
