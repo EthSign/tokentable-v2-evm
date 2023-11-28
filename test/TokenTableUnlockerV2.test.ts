@@ -80,15 +80,14 @@ const calculateAmountOfTokensToClaimAtTimestamp = (
         claimTimestampRelative -
         linearStartTimestampsRelative[latestIncompleteLinearIndex]
     const numOfClaimableUnlocksInIncompleteLinear =
-        (latestIncompleteLinearClaimableTimestampRelative * precisionDecimals) /
+        latestIncompleteLinearClaimableTimestampRelative /
         latestIncompleteLinearIntervalForEachUnlock
 
     const latestIncompleteLinearClaimableBips =
         (linearBips[latestIncompleteLinearIndex] *
             precisionDecimals *
             numOfClaimableUnlocksInIncompleteLinear) /
-        numOfUnlocksForEachLinear[latestIncompleteLinearIndex] /
-        precisionDecimals
+        numOfUnlocksForEachLinear[latestIncompleteLinearIndex]
 
     claimableBips += latestIncompleteLinearClaimableBips
     if (claimableBips > bipsPrecision * precisionDecimals) {

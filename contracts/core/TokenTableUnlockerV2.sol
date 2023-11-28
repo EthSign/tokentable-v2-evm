@@ -500,7 +500,7 @@ contract TokenTableUnlockerV2 is
         override
         returns (uint256 deltaAmountClaimable, uint256 updatedAmountClaimed)
     {
-        uint256 precisionDecimals = 10 ** 10;
+        uint256 precisionDecimals = 10 ** 5;
         UnlockingScheduleActual memory actual = unlockingScheduleActuals[
             actualId
         ];
@@ -555,15 +555,13 @@ contract TokenTableUnlockerV2 is
                 preset.linearStartTimestampsRelative[
                     latestIncompleteLinearIndex
                 ];
-        uint256 numOfClaimableUnlocksInIncompleteLinear = (latestIncompleteLinearClaimableTimestampRelative *
-                precisionDecimals) /
+        uint256 numOfClaimableUnlocksInIncompleteLinear = latestIncompleteLinearClaimableTimestampRelative /
                 latestIncompleteLinearIntervalForEachUnlock;
         updatedAmountClaimed +=
             (preset.linearBips[latestIncompleteLinearIndex] *
                 precisionDecimals *
                 numOfClaimableUnlocksInIncompleteLinear) /
-            preset.numOfUnlocksForEachLinear[latestIncompleteLinearIndex] /
-            precisionDecimals;
+            preset.numOfUnlocksForEachLinear[latestIncompleteLinearIndex];
         updatedAmountClaimed =
             (updatedAmountClaimed * actual.totalAmount) /
             BIPS_PRECISION /

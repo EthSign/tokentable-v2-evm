@@ -167,7 +167,9 @@ export default {
             polygonMumbai: process.env.POLYGONSCAN_KEY,
             mantaPacific: process.env.MANTAPACIFIC_KEY,
             mantaPacificTestnet: process.env.MANTAPACIFIC_TEST_KEY,
-            avaxC: process.env.SNOWTRACE_KEY
+            avaxC: process.env.SNOWTRACE_KEY,
+            sepolia: process.env.ETHERSCAN_KEY,
+            mainnet: process.env.ETHERSCAN_KEY
         },
         customChains: [
             {
