@@ -1,7 +1,7 @@
 import {DataSourceContext} from '@graphprotocol/graph-ts'
 import {TokenTableSuiteDeployed as TokenTableSuiteDeployedEvent} from '../generated/TTUDeployer/TTUDeployer'
 import {TokenTableSuiteDeployed} from '../generated/schema'
-import {TokenTableUnlockerV2} from '../generated/templates'
+import {TokenTableUnlockerV2, TTFutureTokenV2} from '../generated/templates'
 import {TokenTableUnlockerV2 as TTUV2Instance} from '../generated/templates/TokenTableUnlockerV2/TokenTableUnlockerV2'
 
 export function handleTokenTableSuiteDeployed(
@@ -21,8 +21,11 @@ export function handleTokenTableSuiteDeployed(
 
     let context = new DataSourceContext()
     context.setString('projectId', event.params.projectId)
+    context.setBytes('unlockerAddress', event.params.unlocker)
+    context.setBytes('futureTokenAddress', event.params.futureToken)
 
     entity.save()
 
     TokenTableUnlockerV2.createWithContext(event.params.unlocker, context)
+    TTFutureTokenV2.createWithContext(event.params.futureToken, context)
 }

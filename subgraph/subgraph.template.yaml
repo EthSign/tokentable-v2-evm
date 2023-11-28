@@ -20,6 +20,8 @@ dataSources:
           file: ../artifacts/contracts/proxy/TTUDeployerLite.sol/TTUDeployerLite.json
         - name: TokenTableUnlockerV2
           file: ../artifacts/contracts/core/TokenTableUnlockerV2.sol/TokenTableUnlockerV2.json
+        - name: TTFutureTokenV2
+          file: ../artifacts/contracts/core/TTFutureTokenV2.sol/TTFutureTokenV2.json
       eventHandlers:
         - event: TokenTableSuiteDeployed(address,string,address,address,address)
           handler: handleTokenTableSuiteDeployed
@@ -65,3 +67,21 @@ templates:
         - event: TokensWithdrawn(uint256,address,uint256)
           handler: handleTokensWithdrawn
       file: ./src/token-table-unlocker-v-2.ts
+  - kind: ethereum
+    name: TTFutureTokenV2
+    network: {{network}}
+    source:
+      abi: TTFutureTokenV2
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Transfer
+      abis:
+        - name: TTFutureTokenV2
+          file: ../artifacts/contracts/core/TTFutureTokenV2.sol/TTFutureTokenV2.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,indexed uint256)
+          handler: handleTransfer
+      file: ./src/future-token-v-2.ts

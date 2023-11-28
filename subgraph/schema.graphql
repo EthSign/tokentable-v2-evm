@@ -1,3 +1,4 @@
+# Deployer
 type TokenTableSuiteDeployed @entity(immutable: true) {
   id: String!
   from: Bytes! # address
@@ -9,6 +10,7 @@ type TokenTableSuiteDeployed @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+# Unlocker
 enum TTEventType {
   ActualCancelled
   ActualCreated
@@ -16,6 +18,7 @@ enum TTEventType {
   TokensClaimed
   TokensDeposited
   TokensWithdrawn
+  FutureTokenTransferred
 }
 
 type TTEvent @entity(immutable: true) {
@@ -49,4 +52,11 @@ type OwnershipTransferred @entity(immutable: true) {
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
+}
+
+# FutureToken
+type TokenTableUser @entity {
+  id: Bytes!
+  projectIds: [String!]
+  actualIds: [BigInt!]
 }
