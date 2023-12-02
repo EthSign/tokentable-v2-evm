@@ -14,6 +14,7 @@
     "deploy:mantaPacificTestnet": "mustache config/mantaPacificTestnet.json subgraph.template.yaml > subgraph.yaml && graph build && goldsky subgraph deploy ttu-v2-manta-pacific-testnet/v1.0.0",
     "deploy:mantaPacific": "mustache config/mantaPacific.json subgraph.template.yaml > subgraph.yaml && graph build && goldsky subgraph deploy ttu-v2-manta-pacific/v1.0.0",
     "deploy:avaxC": "mustache config/avaxC.json subgraph.template.yaml > subgraph.yaml && graph build && graph deploy --studio ttu-v2-avax",
+    "deploy:zetachainTestnet": "mustache config/zetachainTestnet.json subgraph.template.yaml > subgraph.yaml && graph build && goldsky subgraph deploy ttu-v2-zetachain-testnet/v1.0.0",
     "test": "graph test"
   },
   "dependencies": {

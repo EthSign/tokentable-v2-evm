@@ -124,6 +124,13 @@ export default {
             accounts: [process.env.PRIVATE_KEY],
             saveDeployments: true,
             zksync: false
+        },
+        zetachainTestnet: {
+            chainId: 7001,
+            url: 'https://zetachain-athens-evm.blockpi.network/v1/rpc/public',
+            accounts: [process.env.PRIVATE_KEY],
+            saveDeployments: true,
+            zksync: false
         }
     },
     solidity: {
@@ -169,7 +176,8 @@ export default {
             mantaPacificTestnet: process.env.MANTAPACIFIC_TEST_KEY,
             avaxC: process.env.SNOWTRACE_KEY,
             sepolia: process.env.ETHERSCAN_KEY,
-            mainnet: process.env.ETHERSCAN_KEY
+            mainnet: process.env.ETHERSCAN_KEY,
+            zetachainTestnet: process.env.ETHERSCAN_KEY
         },
         customChains: [
             {
@@ -195,6 +203,14 @@ export default {
                 urls: {
                     apiURL: 'https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan',
                     browserURL: 'https://avascan.info/'
+                }
+            },
+            {
+                network: 'zetachainTestnet',
+                chainId: 7001,
+                urls: {
+                    apiURL: 'https://zetachain-athens-3.blockscout.com/api',
+                    browserURL: 'https://zetachain-athens-3.blockscout.com/'
                 }
             }
         ]
