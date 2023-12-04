@@ -131,6 +131,13 @@ export default {
             accounts: [process.env.PRIVATE_KEY],
             saveDeployments: true,
             zksync: false
+        },
+        scroll: {
+            chainId: 534352,
+            url: 'https://rpc.ankr.com/scroll',
+            accounts: [process.env.PRIVATE_KEY],
+            saveDeployments: true,
+            zksync: false
         }
     },
     solidity: {

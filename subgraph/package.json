@@ -15,10 +15,11 @@
     "deploy:mantaPacific": "mustache config/mantaPacific.json subgraph.template.yaml > subgraph.yaml && graph build && goldsky subgraph deploy ttu-v2-manta-pacific/v1.0.0",
     "deploy:avaxC": "mustache config/avaxC.json subgraph.template.yaml > subgraph.yaml && graph build && graph deploy --studio ttu-v2-avax",
     "deploy:zetachainTestnet": "mustache config/zetachainTestnet.json subgraph.template.yaml > subgraph.yaml && graph build && goldsky subgraph deploy ttu-v2-zetachain-testnet/v1.0.0",
+    "deploy:scroll": "mustache config/scroll.json subgraph.template.yaml > subgraph.yaml && graph build && graph deploy --studio ttu-v2-scroll",
     "test": "graph test"
   },
   "dependencies": {
-    "@graphprotocol/graph-cli": "^0.59.0",
+    "@graphprotocol/graph-cli": "^0.62.0",
     "@graphprotocol/graph-ts": "0.31.0",
     "mustache": "^4.2.0"
   },
