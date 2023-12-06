@@ -3,7 +3,10 @@
     "dist",
     "node_modules",
     "subgraph",
-    "playground.ts"
+    "playground.ts",
+    "deploy-tt-suite.ts",
+    "mint-mockerc20.ts",
+    "upgrade.ts"
   ],
   "root": true,
   "parser": "@typescript-eslint/parser",
