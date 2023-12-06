@@ -27,6 +27,7 @@ contract TokenTableUnlockerV2 is
     ITTFutureTokenV2 public futureToken;
     ITTAccessControlDelegate public accessControlDelegate;
     ITTHook public hook;
+    uint256 public pool;
     bool public override isCancelable;
     bool public override isAccessControllable;
     bool public override isHookable;
@@ -34,7 +35,6 @@ contract TokenTableUnlockerV2 is
     mapping(bytes32 => UnlockingSchedulePreset)
         internal _unlockingSchedulePresets;
     mapping(uint256 => UnlockingScheduleActual) public unlockingScheduleActuals;
-    mapping(uint256 => uint256) public amountUnlockedLeftoverForActuals;
 
     constructor() {
         _disableInitializers(); // This will cause test cases to fail, comment when unit testing
@@ -124,9 +124,9 @@ contract TokenTableUnlockerV2 is
             startTimestampAbsolute,
             amountSkipped,
             totalAmount,
-            amountDepositingNow,
             0
         );
+        _deposit(amountDepositingNow);
         _callHook(TokenTableUnlockerV2.createActual.selector, msg.data);
     }
 
@@ -136,7 +136,7 @@ contract TokenTableUnlockerV2 is
         uint256[] calldata startTimestampAbsolute,
         uint256[] calldata amountSkipped,
         uint256[] calldata totalAmount,
-        uint256[] memory amountDepositingNow
+        uint256 amountDepositingNow
     ) external virtual override {
         bytes4 selector = bytes4(
             keccak256(
@@ -151,10 +151,10 @@ contract TokenTableUnlockerV2 is
                 startTimestampAbsolute[i],
                 amountSkipped[i],
                 totalAmount[i],
-                amountDepositingNow[i],
                 0
             );
         }
+        _deposit(amountDepositingNow);
         _callHook(selector, msg.data);
     }
 
@@ -164,7 +164,7 @@ contract TokenTableUnlockerV2 is
         uint256[] calldata startTimestampAbsolute,
         uint256[] calldata amountSkipped,
         uint256[] calldata totalAmount,
-        uint256[] memory amountDepositingNow,
+        uint256 amountDepositingNow,
         uint256 batchId
     ) external virtual override {
         bytes4 selector = bytes4(
@@ -180,59 +180,34 @@ contract TokenTableUnlockerV2 is
                 startTimestampAbsolute[i],
                 amountSkipped[i],
                 totalAmount[i],
-                amountDepositingNow[i],
                 batchId
             );
         }
+        _deposit(amountDepositingNow);
         _callHook(selector, msg.data);
     }
 
-    function deposit(
-        uint256 actualId,
-        uint256 amount
-    ) external virtual override {
+    function deposit(uint256 amount) external virtual override {
         _checkAccessControl(
             TokenTableUnlockerV2.deposit.selector,
-            abi.encode(actualId, amount),
+            abi.encode(amount),
             _msgSender(),
             true
         );
-        _deposit(actualId, amount);
+        _deposit(amount);
         _callHook(TokenTableUnlockerV2.deposit.selector, msg.data);
     }
 
-    function batchDeposit(
-        uint256[] calldata actualId,
-        uint256[] calldata amount
-    ) external virtual override {
-        _checkAccessControl(
-            TokenTableUnlockerV2.batchDeposit.selector,
-            abi.encode(actualId, amount),
-            _msgSender(),
-            true
-        );
-        for (uint256 i = 0; i < actualId.length; i++) {
-            _deposit(actualId[i], amount[i]);
-        }
-        _callHook(TokenTableUnlockerV2.batchDeposit.selector, msg.data);
-    }
-
-    function withdrawDeposit(
-        uint256 actualId,
-        uint256 amount
-    ) external virtual override {
+    function withdrawDeposit(uint256 amount) external virtual override {
         _checkAccessControl(
             TokenTableUnlockerV2.withdrawDeposit.selector,
-            abi.encode(actualId, amount),
+            abi.encode(amount),
             _msgSender(),
             true
         );
-        UnlockingScheduleActual storage actual = unlockingScheduleActuals[
-            actualId
-        ];
-        actual.amountDeposited -= amount;
+        pool -= amount;
         IERC20(getProjectToken()).safeTransfer(_msgSender(), amount);
-        emit TokensWithdrawn(actualId, _msgSender(), amount);
+        emit TokensWithdrawn(_msgSender(), amount);
         _callHook(TokenTableUnlockerV2.withdrawDeposit.selector, msg.data);
     }
 
@@ -266,67 +241,22 @@ contract TokenTableUnlockerV2 is
         _callHook(TokenTableUnlockerV2.batchClaim.selector, msg.data);
     }
 
-    function claimCancelledActual(
-        uint256 actualId,
-        address overrideRecipient
-    ) external virtual override nonReentrant {
-        _checkAccessControl(
-            TokenTableUnlockerV2.claimCancelledActual.selector,
-            abi.encode(actualId, overrideRecipient),
-            _msgSender(),
-            false
-        );
-        address recipient;
-        if (overrideRecipient == address(0))
-            recipient = futureToken.ownerOf(actualId);
-        else recipient = overrideRecipient;
-        uint256 amountClaimable = amountUnlockedLeftoverForActuals[actualId];
-        amountUnlockedLeftoverForActuals[actualId] = 0;
-        IERC20(getProjectToken()).safeTransfer(recipient, amountClaimable);
-        emit TokensClaimed(actualId, _msgSender(), recipient, amountClaimable);
-        _callHook(TokenTableUnlockerV2.claimCancelledActual.selector, msg.data);
-    }
-
     function cancel(
-        uint256 actualId,
-        address refundFounderAddress
-    )
-        external
-        virtual
-        override
-        nonReentrant
-        returns (uint256 amountUnlockedLeftover, uint256 amountRefunded)
-    {
+        uint256 actualId
+    ) external virtual override nonReentrant returns (uint256 newTotalAmount) {
         if (!isCancelable) revert NotPermissioned();
         _checkAccessControl(
             TokenTableUnlockerV2.cancel.selector,
-            abi.encode(actualId, refundFounderAddress),
+            abi.encode(actualId),
             _msgSender(),
             true
         );
-        (amountUnlockedLeftover, ) = calculateAmountClaimable(actualId);
-        amountUnlockedLeftoverForActuals[actualId] += amountUnlockedLeftover;
+        (, newTotalAmount) = calculateAmountClaimable(actualId);
         UnlockingScheduleActual memory actual = unlockingScheduleActuals[
             actualId
         ];
-        if (actual.amountDeposited < amountUnlockedLeftover)
-            revert InsufficientDeposit(
-                amountUnlockedLeftover,
-                actual.amountDeposited
-            );
-        actual.amountDeposited -= amountUnlockedLeftover;
-        amountRefunded = actual.amountDeposited;
-        IERC20(getProjectToken()).safeTransfer(
-            refundFounderAddress,
-            amountRefunded
-        );
-        emit ActualCancelled(
-            actualId,
-            amountUnlockedLeftover,
-            amountRefunded,
-            refundFounderAddress
-        );
-        delete unlockingScheduleActuals[actualId];
+        actual.totalAmount = newTotalAmount;
+        emit ActualCancelled(actualId, newTotalAmount);
         _callHook(TokenTableUnlockerV2.cancel.selector, msg.data);
     }
 
@@ -438,7 +368,6 @@ contract TokenTableUnlockerV2 is
         uint256 startTimestampAbsolute,
         uint256 amountSkipped,
         uint256 totalAmount,
-        uint256 amountDepositingNow,
         uint256 batchId
     ) internal virtual {
         uint256 actualId = futureToken.safeMint(recipient);
@@ -455,28 +384,17 @@ contract TokenTableUnlockerV2 is
         actual.amountClaimed = amountSkipped;
         actual.totalAmount = totalAmount;
         emit ActualCreated(presetId, actualId, batchId);
-        if (amountDepositingNow > 0) {
-            actual.amountDeposited = amountDepositingNow;
-            IERC20(getProjectToken()).safeTransferFrom(
-                _msgSender(),
-                address(this),
-                amountDepositingNow
-            );
-            emit TokensDeposited(actualId, amountDepositingNow);
-        }
     }
 
-    function _deposit(uint256 actualId, uint256 amount) internal {
-        UnlockingScheduleActual storage actual = unlockingScheduleActuals[
-            actualId
-        ];
+    function _deposit(uint256 amount) internal {
+        if (amount == 0) return;
+        pool += amount;
         IERC20(getProjectToken()).safeTransferFrom(
             _msgSender(),
             address(this),
             amount
         );
-        actual.amountDeposited += amount;
-        emit TokensDeposited(actualId, amount);
+        emit TokensDeposited(amount);
     }
 
     function _claim(
@@ -620,12 +538,7 @@ contract TokenTableUnlockerV2 is
             actualId
         ];
         actual.amountClaimed = updatedAmountClaimed;
-        if (actual.amountDeposited < deltaAmountClaimable)
-            revert InsufficientDeposit(
-                deltaAmountClaimable,
-                actual.amountDeposited
-            );
-        actual.amountDeposited -= deltaAmountClaimable;
+        pool -= deltaAmountClaimable;
         if (overrideRecipient == address(0)) {
             recipient = futureToken.ownerOf(actualId);
         } else {
@@ -655,10 +568,7 @@ contract TokenTableUnlockerV2 is
         bool onlyOwner
     ) internal view {
         if (address(accessControlDelegate) == address(0)) {
-            if (
-                selector == this.claimCancelledActual.selector ||
-                selector == this.claim.selector
-            ) {
+            if (selector == this.claim.selector) {
                 (uint256 actualId, ) = abi.decode(context, (uint256, address));
                 if (futureToken.ownerOf(actualId) != _msgSender()) {
                     revert NotPermissioned();

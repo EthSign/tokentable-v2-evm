@@ -291,17 +291,13 @@ describe('V2', () => {
                     await futureToken.tokensOfOwner(investor.address)
                 )[0]
                 await expect(
-                    unlocker
-                        .connect(investor)
-                        .deposit(actualId, amountDepositingNow)
+                    unlocker.connect(investor).deposit(amountDepositingNow)
                 ).to.be.revertedWithCustomError(unlocker, 'NotPermissioned')
                 const balanceBefore = await projectToken.balanceOf(
                     await unlocker.getAddress()
                 )
                 await expect(
-                    await unlocker
-                        .connect(founder)
-                        .deposit(actualId, amountDepositingNow)
+                    await unlocker.connect(founder).deposit(amountDepositingNow)
                 )
                     .to.emit(unlocker, 'TokensDeposited')
                     .withArgs(actualId, amountDepositingNow)
@@ -336,18 +332,14 @@ describe('V2', () => {
                 const actualId = (
                     await futureToken.tokensOfOwner(investor.address)
                 )[0]
-                await unlocker
-                    .connect(founder)
-                    .deposit(actualId, amountDepositingNow)
+                await unlocker.connect(founder).deposit(amountDepositingNow)
                 await expect(
                     unlocker
                         .connect(investor)
-                        .withdrawDeposit(actualId, amountDepositingNow)
+                        .withdrawDeposit(amountDepositingNow)
                 ).to.be.revertedWithCustomError(unlocker, 'NotPermissioned')
                 await expect(
-                    unlocker
-                        .connect(founder)
-                        .withdrawDeposit(actualId, totalAmount + 1n)
+                    unlocker.connect(founder).withdrawDeposit(totalAmount + 1n)
                 ).to.be.revertedWithPanic('0x11')
 
                 const balanceOfFounderBefore = await projectToken.balanceOf(
@@ -356,7 +348,7 @@ describe('V2', () => {
                 await expect(
                     await unlocker
                         .connect(founder)
-                        .withdrawDeposit(actualId, amountDepositingNow)
+                        .withdrawDeposit(amountDepositingNow)
                 )
                     .to.emit(unlocker, 'TokensWithdrawn')
                     .withArgs(actualId, founder.address, amountDepositingNow)
@@ -544,7 +536,7 @@ describe('V2', () => {
                     )
                     .withArgs(deltaAmountClaimable, amountDepositingNow)
                 // Deposit more, should now claim
-                await unlocker.connect(founder).deposit(actualId, totalAmount)
+                await unlocker.connect(founder).deposit(totalAmount)
                 balanceBefore = await projectToken.balanceOf(investor.address)
                 await expect(
                     await unlocker
@@ -691,7 +683,7 @@ describe('V2', () => {
                 )[0]
                 // Should revert when calling without permission
                 await expect(
-                    unlocker.connect(investor).cancel(actualId, founder.address)
+                    unlocker.connect(investor).cancel(actualId)
                 ).to.be.revertedWithCustomError(unlocker, 'NotPermissioned')
                 // Time jump to beginning of third linear and claim
                 let claimTimestampAbsolute =
@@ -732,7 +724,7 @@ describe('V2', () => {
                     amountShouldSendToInvestor
                 const cancelTx = await unlocker
                     .connect(founder)
-                    .cancel(actualId, founder.address)
+                    .cancel(actualId)
                 await expect(cancelTx)
                     .to.emit(unlocker, 'ActualCancelled')
                     .withArgs(
@@ -740,17 +732,6 @@ describe('V2', () => {
                         amountShouldSendToInvestor,
                         amountRefundedToFounder,
                         founder.address
-                    )
-                const claimCancelledTx = await unlocker
-                    .connect(investor)
-                    .claimCancelledActual(actualId, ZeroAddress)
-                await expect(claimCancelledTx)
-                    .to.emit(unlocker, 'TokensClaimed')
-                    .withArgs(
-                        actualId,
-                        investor.address,
-                        investor.address,
-                        amountShouldSendToInvestor
                     )
             })
 

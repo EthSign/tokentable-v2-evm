@@ -13,20 +13,15 @@ import {IVersionable} from "./IVersionable.sol";
 abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
     event PresetCreated(bytes32 presetId);
     event ActualCreated(bytes32 presetId, uint256 actualId, uint256 batchId);
-    event TokensDeposited(uint256 actualId, uint256 amount);
+    event TokensDeposited(uint256 amount);
     event TokensClaimed(
         uint256 actualId,
         address caller,
         address to,
         uint256 amount
     );
-    event TokensWithdrawn(uint256 actualId, address by, uint256 amount);
-    event ActualCancelled(
-        uint256 actualId,
-        uint256 amountUnlockedLeftover,
-        uint256 amountRefunded,
-        address refundFounderAddress
-    );
+    event TokensWithdrawn(address by, uint256 amount);
+    event ActualCancelled(uint256 actualId, uint256 newTotalAmount);
 
     error InvalidPresetFormat(); // 0x0ef8e8dc
     error PresetExists(); // 0x7cbb15b4
@@ -124,7 +119,7 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
         uint256[] calldata startTimestampAbsolute,
         uint256[] calldata amountSkipped,
         uint256[] calldata totalAmount,
-        uint256[] memory amountDepositingNow
+        uint256 amountDepositingNow
     ) external virtual;
 
     /**
@@ -138,7 +133,7 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
         uint256[] calldata startTimestampAbsolute,
         uint256[] calldata amountSkipped,
         uint256[] calldata totalAmount,
-        uint256[] memory amountDepositingNow,
+        uint256 amountDepositingNow,
         uint256 batchId
     ) external virtual;
 
@@ -151,16 +146,9 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
      * - Only callable by the owner if no access control delegate is set. If
      * delegate is set, access by anyone other than the owner depends on the
      * return value of the delegate.
-     * @param actualId The ID of the actual unlocking schedule that we are
-     * intending to deposit into.
      * @param amount The amount of project tokens to be deposited.
      */
-    function deposit(uint256 actualId, uint256 amount) external virtual;
-
-    function batchDeposit(
-        uint256[] calldata actualId,
-        uint256[] calldata amount
-    ) external virtual;
+    function deposit(uint256 amount) external virtual;
 
     /**
      * @notice Withdraws existing locked deposit from an actual schedule.
@@ -168,11 +156,9 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
      * - Only callable by the owner if no access control delegate is set. If
      * delegate is set, access by anyone other than the owner depends on the
      * return value of the delegate.
-     * @param actualId The ID of the actual unlocking schedule that we are
-     * intending to withdraw from.
      * @param amount The amount of project tokens to be withdrawn.
      */
-    function withdrawDeposit(uint256 actualId, uint256 amount) external virtual;
+    function withdrawDeposit(uint256 amount) external virtual;
 
     /**
      * @notice Claims claimable tokens for the specified actualId. If the
@@ -201,27 +187,6 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
     ) external virtual;
 
     /**
-     * @notice Claims claimable tokens for the specified CANCELLED actualId. If
-     * the caller is the owner of the actualId or has permission, then the
-     * tokens can be claimed to a different address (as specified in args)
-     * @dev Emits: TokensClaimed.
-     * - Only callable by the owner of the FutureToken if no access control
-     * delegate is set. If delegate is set, access by anyone other than the
-     * FutureToken owner depends on the return value of the delegate.
-     * @param actualId The ID of the actual unlocking schedule that we are
-     * intending to claim from.
-     * @param overrideRecipient If we want to send the claimed tokens to an
-     * address other than the owner of the FutureToken. This MUST pass through
-     * access control, otherwise it will revert. If we want to send the claimed
-     * tokens to the owner of the FutureToken (default behavior), pass in
-     * `ethers.constants.AddressZero`.
-     */
-    function claimCancelledActual(
-        uint256 actualId,
-        address overrideRecipient
-    ) external virtual;
-
-    /**
      * @notice Cancels an actual unlocking schedule effective immediately.
      * Tokens not yet claimed but already unlocked will be tallied.
      * @dev Emits: ActualCancelled.
@@ -230,14 +195,10 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
      * return value of the delegate.
      * @param actualId The ID of the actual unlocking schedule that we are
      * intending to cancel.
-     * @param refundFounderAddress The address that the locked tokens will
-     * be sent to. This does not have to be a founder's address. Using the zero
-     * address means withdraw to sender's address.
      */
     function cancel(
-        uint256 actualId,
-        address refundFounderAddress
-    ) external virtual returns (uint256 amountClaimed, uint256 amountRefunded);
+        uint256 actualId
+    ) external virtual returns (uint256 newTotalAmount);
 
     /**
      * @notice Sets the access control delegate used to control claim behavior.

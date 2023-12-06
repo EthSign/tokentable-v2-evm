@@ -32,6 +32,5 @@ struct UnlockingScheduleActual {
     bytes32 presetId;
     uint256 startTimestampAbsolute;
     uint256 amountClaimed;
-    uint256 amountDeposited;
     uint256 totalAmount;
 }
