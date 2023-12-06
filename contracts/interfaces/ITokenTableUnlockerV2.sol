@@ -12,7 +12,7 @@ import {IVersionable} from "./IVersionable.sol";
  */
 abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
     event PresetCreated(bytes32 presetId);
-    event ActualCreated(bytes32 presetId, uint256 actualId);
+    event ActualCreated(bytes32 presetId, uint256 actualId, uint256 batchId);
     event TokensDeposited(uint256 actualId, uint256 amount);
     event TokensClaimed(
         uint256 actualId,
@@ -115,6 +115,9 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
         uint256 amountDepositingNow
     ) external virtual;
 
+    /**
+     * @notice Batches the deposit logic.
+     */
     function batchCreateActual(
         address[] calldata recipient,
         bytes32[] calldata presetId,
@@ -122,6 +125,21 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
         uint256[] calldata amountSkipped,
         uint256[] calldata totalAmount,
         uint256[] memory amountDepositingNow
+    ) external virtual;
+
+    /**
+     * @notice Batches the deposit logic.
+     * @dev `batchId` is used by the frontend.
+     * It is not stored and is emitted as an event.
+     */
+    function batchCreateActual(
+        address[] calldata recipient,
+        bytes32[] calldata presetId,
+        uint256[] calldata startTimestampAbsolute,
+        uint256[] calldata amountSkipped,
+        uint256[] calldata totalAmount,
+        uint256[] memory amountDepositingNow,
+        uint256 batchId
     ) external virtual;
 
     /**

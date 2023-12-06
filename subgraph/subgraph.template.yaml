@@ -52,7 +52,7 @@ templates:
       eventHandlers:
         - event: ActualCancelled(uint256,uint256,uint256,address)
           handler: handleActualCancelled
-        - event: ActualCreated(bytes32,uint256)
+        - event: ActualCreated(bytes32,uint256,uint256)
           handler: handleActualCreated
         - event: Initialized(uint8)
           handler: handleInitialized

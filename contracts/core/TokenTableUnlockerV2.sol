@@ -124,7 +124,8 @@ contract TokenTableUnlockerV2 is
             startTimestampAbsolute,
             amountSkipped,
             totalAmount,
-            amountDepositingNow
+            amountDepositingNow,
+            0
         );
         _callHook(TokenTableUnlockerV2.createActual.selector, msg.data);
     }
@@ -137,12 +138,12 @@ contract TokenTableUnlockerV2 is
         uint256[] calldata totalAmount,
         uint256[] memory amountDepositingNow
     ) external virtual override {
-        _checkAccessControl(
-            TokenTableUnlockerV2.batchCreateActual.selector,
-            "",
-            _msgSender(),
-            true
+        bytes4 selector = bytes4(
+            keccak256(
+                "batchCreateActual(address[],bytes32[],uint256[],uint256[],uint256[],uint256[])"
+            )
         );
+        _checkAccessControl(selector, "", _msgSender(), true);
         for (uint256 i = 0; i < presetId.length; i++) {
             _createActual(
                 recipient[i],
@@ -150,10 +151,40 @@ contract TokenTableUnlockerV2 is
                 startTimestampAbsolute[i],
                 amountSkipped[i],
                 totalAmount[i],
-                amountDepositingNow[i]
+                amountDepositingNow[i],
+                0
             );
         }
-        _callHook(TokenTableUnlockerV2.batchCreateActual.selector, msg.data);
+        _callHook(selector, msg.data);
+    }
+
+    function batchCreateActual(
+        address[] calldata recipient,
+        bytes32[] calldata presetId,
+        uint256[] calldata startTimestampAbsolute,
+        uint256[] calldata amountSkipped,
+        uint256[] calldata totalAmount,
+        uint256[] memory amountDepositingNow,
+        uint256 batchId
+    ) external virtual override {
+        bytes4 selector = bytes4(
+            keccak256(
+                "batchCreateActual(address[],bytes32[],uint256[],uint256[],uint256[],uint256[])"
+            )
+        );
+        _checkAccessControl(selector, "", _msgSender(), true);
+        for (uint256 i = 0; i < presetId.length; i++) {
+            _createActual(
+                recipient[i],
+                presetId[i],
+                startTimestampAbsolute[i],
+                amountSkipped[i],
+                totalAmount[i],
+                amountDepositingNow[i],
+                batchId
+            );
+        }
+        _callHook(selector, msg.data);
     }
 
     function deposit(
@@ -407,7 +438,8 @@ contract TokenTableUnlockerV2 is
         uint256 startTimestampAbsolute,
         uint256 amountSkipped,
         uint256 totalAmount,
-        uint256 amountDepositingNow
+        uint256 amountDepositingNow,
+        uint256 batchId
     ) internal virtual {
         uint256 actualId = futureToken.safeMint(recipient);
         UnlockingScheduleActual storage actual = unlockingScheduleActuals[
@@ -422,7 +454,7 @@ contract TokenTableUnlockerV2 is
         actual.startTimestampAbsolute = startTimestampAbsolute;
         actual.amountClaimed = amountSkipped;
         actual.totalAmount = totalAmount;
-        emit ActualCreated(presetId, actualId);
+        emit ActualCreated(presetId, actualId, batchId);
         if (amountDepositingNow > 0) {
             actual.amountDeposited = amountDepositingNow;
             IERC20(getProjectToken()).safeTransferFrom(
@@ -488,7 +520,7 @@ contract TokenTableUnlockerV2 is
     }
 
     function version() external pure returns (string memory) {
-        return "2.0.3";
+        return "2.0.4";
     }
 
     function calculateAmountClaimable(

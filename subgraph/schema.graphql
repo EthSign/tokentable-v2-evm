@@ -31,6 +31,7 @@ type TTEvent @entity(immutable: true) {
   actualId: BigInt
   someAddress: Bytes
   someBytes: Bytes
+  someNumber: BigInt
   amount: BigInt
   amountUnlockedLeftover: BigInt
   amountRefunded: BigInt
