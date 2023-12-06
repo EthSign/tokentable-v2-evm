@@ -22,7 +22,7 @@ contract TTTrackerTokenV2 is ITTTrackerTokenV2, IERC20Metadata, Initializable {
 
     constructor() {
         if (block.chainid != 33133) {
-            _disableInitializers(); // This will cause test cases to fail, comment when unit testing
+            _disableInitializers();
         }
     }
 
@@ -111,6 +111,6 @@ contract TTTrackerTokenV2 is ITTTrackerTokenV2, IERC20Metadata, Initializable {
     }
 
     function version() external pure returns (string memory) {
-        return "2.0.1";
+        return "2.5.0";
     }
 }

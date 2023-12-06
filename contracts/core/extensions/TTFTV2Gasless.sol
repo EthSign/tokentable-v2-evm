@@ -11,7 +11,7 @@ contract TTFTV2Gasless is TTFutureTokenV2, CustomERC2771Context {
         if (
             _msgSenderERC721A() !=
             ITokenTableUnlockerV2(authorizedMinter).owner()
-        ) revert Unauthorized();
+        ) revert NotPermissioned();
         super.setTrustedForwarder(forwarder);
     }
 

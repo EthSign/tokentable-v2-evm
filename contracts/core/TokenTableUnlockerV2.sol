@@ -38,7 +38,7 @@ contract TokenTableUnlockerV2 is
 
     constructor() {
         if (block.chainid != 33133) {
-            _disableInitializers(); // This will cause test cases to fail, comment when unit testing
+            _disableInitializers();
         }
     }
 
@@ -440,7 +440,7 @@ contract TokenTableUnlockerV2 is
     }
 
     function version() external pure returns (string memory) {
-        return "2.0.4";
+        return "2.5.0";
     }
 
     function calculateAmountClaimable(

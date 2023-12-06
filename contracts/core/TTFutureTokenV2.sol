@@ -27,7 +27,7 @@ contract TTFutureTokenV2 is ITTFutureTokenV2, ERC721AQueryableUpgradeable {
 
     constructor() {
         if (block.chainid != 33133) {
-            _dummyInitialize(); // This will cause test cases to fail, comment when unit testing
+            _dummyInitialize();
         }
     }
 
@@ -55,7 +55,7 @@ contract TTFutureTokenV2 is ITTFutureTokenV2, ERC721AQueryableUpgradeable {
     function setAuthorizedMinterSingleUse(
         address authorizedMinter_
     ) external override {
-        if (authorizedMinter != address(0)) revert Unauthorized();
+        if (authorizedMinter != address(0)) revert NotPermissioned();
         authorizedMinter = authorizedMinter_;
     }
 
@@ -65,7 +65,7 @@ contract TTFutureTokenV2 is ITTFutureTokenV2, ERC721AQueryableUpgradeable {
      * token with tokenId == actualId is minted.
      */
     function safeMint(address to) external override returns (uint256 tokenId) {
-        if (_msgSenderERC721A() != authorizedMinter) revert Unauthorized();
+        if (_msgSenderERC721A() != authorizedMinter) revert NotPermissioned();
         tokenId = _nextTokenId();
         _safeMint(to, 1);
     }
@@ -78,7 +78,7 @@ contract TTFutureTokenV2 is ITTFutureTokenV2, ERC721AQueryableUpgradeable {
         address to,
         uint256 tokenId
     ) public payable virtual override(ERC721AUpgradeable, IERC721AUpgradeable) {
-        if (!allowTransfer) revert Unauthorized();
+        if (!allowTransfer) revert NotPermissioned();
         super.transferFrom(from, to, tokenId);
     }
 
@@ -91,7 +91,7 @@ contract TTFutureTokenV2 is ITTFutureTokenV2, ERC721AQueryableUpgradeable {
         uint256 tokenId,
         bytes memory _data
     ) public payable virtual override(ERC721AUpgradeable, IERC721AUpgradeable) {
-        if (!allowTransfer) revert Unauthorized();
+        if (!allowTransfer) revert NotPermissioned();
         super.safeTransferFrom(from, to, tokenId, _data);
     }
 
@@ -99,7 +99,7 @@ contract TTFutureTokenV2 is ITTFutureTokenV2, ERC721AQueryableUpgradeable {
         if (
             _msgSenderERC721A() !=
             ITokenTableUnlockerV2(authorizedMinter).owner()
-        ) revert Unauthorized();
+        ) revert NotPermissioned();
         emit DidSetBaseURI(baseUri, uri);
         baseUri = uri;
     }
@@ -135,7 +135,7 @@ contract TTFutureTokenV2 is ITTFutureTokenV2, ERC721AQueryableUpgradeable {
     }
 
     function version() external pure override returns (string memory) {
-        return "2.0.1";
+        return "2.5.0";
     }
 
     function _baseURI() internal view virtual override returns (string memory) {

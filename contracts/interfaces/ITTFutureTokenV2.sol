@@ -7,7 +7,7 @@ import {IVersionable} from "./IVersionable.sol";
 interface ITTFutureTokenV2 is IERC721AQueryableUpgradeable, IVersionable {
     event DidSetBaseURI(string prevURI, string newURI);
 
-    error Unauthorized();
+    error NotPermissioned();
 
     function initialize(address projectToken, bool allowTransfer_) external;
 

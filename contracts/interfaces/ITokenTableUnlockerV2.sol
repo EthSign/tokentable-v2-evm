@@ -27,10 +27,6 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
     error PresetExists(); // 0x7cbb15b4
     error PresetDoesNotExist(); // 0xbd88ff7b
     error InvalidSkipAmount(); // 0x78c0fc43
-    error InsufficientDeposit(
-        uint256 deltaAmountClaimable,
-        uint256 amountDeposited
-    ); // 0x25c3f46e
     error NotPermissioned(); // 0x7f63bd0f
 
     /**
