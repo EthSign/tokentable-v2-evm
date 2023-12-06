@@ -264,7 +264,7 @@ describe('V2', () => {
                     .withArgs(presetId, actualId, 0)
                 await expect(createActualTx)
                     .to.emit(unlocker, 'TokensDeposited')
-                    .withArgs(amountDepositingNow)
+                    .withArgs(amountDepositingNow, amountDepositingNow)
             })
 
             it('should deposit okay and enforce permissions', async () => {
@@ -297,7 +297,7 @@ describe('V2', () => {
                     await unlocker.connect(founder).deposit(amountDepositingNow)
                 )
                     .to.emit(unlocker, 'TokensDeposited')
-                    .withArgs(amountDepositingNow)
+                    .withArgs(amountDepositingNow, amountDepositingNow)
                 const balanceAfter = await projectToken.balanceOf(
                     await unlocker.getAddress()
                 )
@@ -679,13 +679,7 @@ describe('V2', () => {
                     startTimestampAbsolute + linearStartTimestampsRelative[2]
                 await setNextBlockTimestamp(claimTimestampAbsolute)
                 // await mine()
-                await unlocker.connect(investor).claim(actualId, ZeroAddress)
-                // Time jump to beginning of second to last linear and cancel
-                claimTimestampAbsolute =
-                    startTimestampAbsolute + linearStartTimestampsRelative[5]
-                await setNextBlockTimestamp(claimTimestampAbsolute)
-                // await mine()
-                const newTotalAmount =
+                const amountSentToInvestor =
                     calculateAmountOfTokensToClaimAtTimestamp(
                         startTimestampAbsolute,
                         linearEndTimestampRelative,
@@ -696,12 +690,29 @@ describe('V2', () => {
                         BIPS_PRECISION,
                         totalAmount
                     )
+                await unlocker.connect(investor).claim(actualId, ZeroAddress)
+                // Time jump to beginning of second to last linear and cancel
+                claimTimestampAbsolute =
+                    startTimestampAbsolute + linearStartTimestampsRelative[5]
+                await setNextBlockTimestamp(claimTimestampAbsolute)
+                // await mine()
+                const amountShouldSendToInvestor =
+                    calculateAmountOfTokensToClaimAtTimestamp(
+                        startTimestampAbsolute,
+                        linearEndTimestampRelative,
+                        linearStartTimestampsRelative,
+                        claimTimestampAbsolute,
+                        linearBips,
+                        numOfUnlocksForEachLinear,
+                        BIPS_PRECISION,
+                        totalAmount
+                    ) - amountSentToInvestor
                 const cancelTx = await unlocker
                     .connect(founder)
                     .cancel(actualId)
                 await expect(cancelTx)
                     .to.emit(unlocker, 'ActualCancelled')
-                    .withArgs(actualId, newTotalAmount)
+                    .withArgs(actualId, amountShouldSendToInvestor)
             })
 
             /**

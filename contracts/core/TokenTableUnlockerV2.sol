@@ -35,6 +35,8 @@ contract TokenTableUnlockerV2 is
     mapping(bytes32 => UnlockingSchedulePreset)
         internal _unlockingSchedulePresets;
     mapping(uint256 => UnlockingScheduleActual) public unlockingScheduleActuals;
+    mapping(uint256 => uint256)
+        public pendingAmountClaimableForCancelledActuals;
 
     constructor() {
         if (block.chainid != 33133) {
@@ -245,7 +247,13 @@ contract TokenTableUnlockerV2 is
 
     function cancel(
         uint256 actualId
-    ) external virtual override nonReentrant returns (uint256 newTotalAmount) {
+    )
+        external
+        virtual
+        override
+        nonReentrant
+        returns (uint256 pendingAmountClaimable)
+    {
         if (!isCancelable) revert NotPermissioned();
         _checkAccessControl(
             TokenTableUnlockerV2.cancel.selector,
@@ -253,13 +261,11 @@ contract TokenTableUnlockerV2 is
             _msgSender(),
             true
         );
-        (, newTotalAmount) = calculateAmountClaimable(actualId);
-        UnlockingScheduleActual memory actual = unlockingScheduleActuals[
-            actualId
-        ];
-        actual.totalAmount = newTotalAmount;
-        emit ActualCancelled(actualId, newTotalAmount);
+        (uint256 deltaAmountClaimable, ) = calculateAmountClaimable(actualId);
+        emit ActualCancelled(actualId, deltaAmountClaimable);
+        delete unlockingScheduleActuals[actualId];
         _callHook(TokenTableUnlockerV2.cancel.selector, msg.data);
+        return deltaAmountClaimable;
     }
 
     function setAccessControlDelegate(
@@ -389,24 +395,41 @@ contract TokenTableUnlockerV2 is
     }
 
     function _deposit(uint256 amount) internal {
-        if (amount == 0) return;
-        pool += amount;
+        uint256 amountPostDeduction = _chargeFees(amount);
+        if (amountPostDeduction == 0) return;
+        pool += amountPostDeduction;
         IERC20(getProjectToken()).safeTransferFrom(
             _msgSender(),
             address(this),
-            amount
+            amountPostDeduction
         );
-        emit TokensDeposited(amount);
+        emit TokensDeposited(amount, amountPostDeduction);
     }
 
     function _claim(
         uint256 actualId,
         address overrideRecipient
     ) internal virtual {
-        (
-            uint256 deltaAmountClaimable,
-            address recipient
-        ) = _updateActualAndSend(actualId, overrideRecipient);
+        uint256 deltaAmountClaimable;
+        address recipient;
+        if (overrideRecipient == address(0)) {
+            recipient = futureToken.ownerOf(actualId);
+        } else {
+            recipient = overrideRecipient;
+        }
+        deltaAmountClaimable = pendingAmountClaimableForCancelledActuals[
+            actualId
+        ];
+        if (deltaAmountClaimable != 0) {
+            pendingAmountClaimableForCancelledActuals[actualId] = 0;
+            pool -= deltaAmountClaimable;
+            IERC20(getProjectToken()).safeTransfer(
+                recipient,
+                deltaAmountClaimable
+            );
+        } else {
+            deltaAmountClaimable = _updateActualAndSend(actualId, recipient);
+        }
         emit TokensClaimed(
             actualId,
             _msgSender(),
@@ -530,8 +553,8 @@ contract TokenTableUnlockerV2 is
 
     function _updateActualAndSend(
         uint256 actualId,
-        address overrideRecipient
-    ) internal returns (uint256 deltaAmountClaimable_, address recipient) {
+        address recipient
+    ) internal returns (uint256 deltaAmountClaimable_) {
         (
             uint256 deltaAmountClaimable,
             uint256 updatedAmountClaimed
@@ -541,26 +564,27 @@ contract TokenTableUnlockerV2 is
         ];
         actual.amountClaimed = updatedAmountClaimed;
         pool -= deltaAmountClaimable;
-        if (overrideRecipient == address(0)) {
-            recipient = futureToken.ownerOf(actualId);
-        } else {
-            recipient = overrideRecipient;
-        }
+        IERC20(getProjectToken()).safeTransfer(recipient, deltaAmountClaimable);
+        deltaAmountClaimable_ = deltaAmountClaimable;
+    }
+
+    function _chargeFees(
+        uint256 amount
+    ) internal returns (uint256 amountPostDeduction) {
+        amountPostDeduction = amount;
         if (address(deployer) != address(0)) {
             uint256 feesCollected = deployer.feeCollector().getFee(
                 address(this),
-                deltaAmountClaimable
+                amountPostDeduction
             );
             if (feesCollected > 0) {
-                deltaAmountClaimable -= feesCollected;
+                amountPostDeduction -= feesCollected;
                 IERC20(getProjectToken()).safeTransfer(
                     deployer.feeCollector().owner(),
                     feesCollected
                 );
             }
         }
-        IERC20(getProjectToken()).safeTransfer(recipient, deltaAmountClaimable);
-        deltaAmountClaimable_ = deltaAmountClaimable;
     }
 
     function _checkAccessControl(

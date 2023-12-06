@@ -13,7 +13,7 @@ import {IVersionable} from "./IVersionable.sol";
 abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
     event PresetCreated(bytes32 presetId);
     event ActualCreated(bytes32 presetId, uint256 actualId, uint256 batchId);
-    event TokensDeposited(uint256 amount);
+    event TokensDeposited(uint256 amount, uint256 amountPostDeduction);
     event TokensClaimed(
         uint256 actualId,
         address caller,
@@ -21,7 +21,7 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
         uint256 amount
     );
     event TokensWithdrawn(address by, uint256 amount);
-    event ActualCancelled(uint256 actualId, uint256 newTotalAmount);
+    event ActualCancelled(uint256 actualId, uint256 pendingAmountClaimable);
 
     error InvalidPresetFormat(); // 0x0ef8e8dc
     error PresetExists(); // 0x7cbb15b4
