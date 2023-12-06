@@ -26,7 +26,9 @@ contract TTFutureTokenV2 is ITTFutureTokenV2, ERC721AQueryableUpgradeable {
     string public baseUri;
 
     constructor() {
-        _dummyInitialize(); // This will cause test cases to fail, comment when unit testing
+        if (block.chainid != 33133) {
+            _dummyInitialize(); // This will cause test cases to fail, comment when unit testing
+        }
     }
 
     function _dummyInitialize() internal initializerERC721A {}

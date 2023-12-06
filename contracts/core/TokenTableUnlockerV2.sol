@@ -37,7 +37,9 @@ contract TokenTableUnlockerV2 is
     mapping(uint256 => UnlockingScheduleActual) public unlockingScheduleActuals;
 
     constructor() {
-        _disableInitializers(); // This will cause test cases to fail, comment when unit testing
+        if (block.chainid != 33133) {
+            _disableInitializers(); // This will cause test cases to fail, comment when unit testing
+        }
     }
 
     function initialize(
