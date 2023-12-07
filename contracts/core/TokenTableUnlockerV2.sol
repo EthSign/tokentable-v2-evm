@@ -454,7 +454,8 @@ contract TokenTableUnlockerV2 is
         actual.startTimestampAbsolute = startTimestampAbsolute;
         actual.amountClaimed = amountSkipped;
         actual.totalAmount = totalAmount;
-        emit ActualCreated(presetId, actualId, batchId);
+        emit ActualCreated(presetId, actualId);
+        emit ActualCreatedBatch(actualId, batchId);
         if (amountDepositingNow > 0) {
             actual.amountDeposited = amountDepositingNow;
             IERC20(getProjectToken()).safeTransferFrom(
@@ -520,7 +521,7 @@ contract TokenTableUnlockerV2 is
     }
 
     function version() external pure returns (string memory) {
-        return "2.0.4";
+        return "2.0.4-hotfix";
     }
 
     function calculateAmountClaimable(

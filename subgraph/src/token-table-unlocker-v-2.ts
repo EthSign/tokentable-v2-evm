@@ -2,6 +2,7 @@ import {dataSource} from '@graphprotocol/graph-ts'
 import {
     ActualCancelled as ActualCancelledEvent,
     ActualCreated as ActualCreatedEvent,
+    ActualCreatedBatch as ActualCreatedBatchEvent,
     Initialized as InitializedEvent,
     OwnershipTransferred as OwnershipTransferredEvent,
     PresetCreated as PresetCreatedEvent,
@@ -37,6 +38,21 @@ export function handleActualCreated(event: ActualCreatedEvent): void {
     entity.from = event.transaction.from
     entity.timestamp = event.block.timestamp
     entity.presetId = event.params.presetId
+    entity.actualId = event.params.actualId
+
+    const context = dataSource.context()
+    entity.projectId = context.getString('projectId')
+
+    entity.save()
+}
+
+export function handleActualCreatedBatch(event: ActualCreatedBatchEvent): void {
+    let entity = new TTEvent(
+        event.transaction.hash.concatI32(event.logIndex.toI32())
+    )
+    entity.event = 'ActualCreatedBatch'
+    entity.from = event.transaction.from
+    entity.timestamp = event.block.timestamp
     entity.actualId = event.params.actualId
     entity.someNumber = event.params.batchId
 

@@ -12,7 +12,8 @@ import {IVersionable} from "./IVersionable.sol";
  */
 abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
     event PresetCreated(bytes32 presetId);
-    event ActualCreated(bytes32 presetId, uint256 actualId, uint256 batchId);
+    event ActualCreated(bytes32 presetId, uint256 actualId);
+    event ActualCreatedBatch(uint256 actualId, uint256 batchId);
     event TokensDeposited(uint256 actualId, uint256 amount);
     event TokensClaimed(
         uint256 actualId,

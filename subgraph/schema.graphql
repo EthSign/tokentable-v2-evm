@@ -14,6 +14,7 @@ type TokenTableSuiteDeployed @entity(immutable: true) {
 enum TTEventType {
   ActualCancelled
   ActualCreated
+  ActualCreatedBatch
   PresetCreated
   TokensClaimed
   TokensDeposited
