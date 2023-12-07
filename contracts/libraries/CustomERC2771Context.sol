@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Based on OpenZeppelin Contracts (last updated v4.7.0) (metatx/ERC2771Context.sol)
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.20;
 
 abstract contract CustomERC2771Context {
     address public trustedForwarder;

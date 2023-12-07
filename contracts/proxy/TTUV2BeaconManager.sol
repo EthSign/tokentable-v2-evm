@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.20;
 
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
@@ -24,10 +24,16 @@ contract TTUV2BeaconManager is Ownable, IVersionable {
         address unlockerImpl,
         address futureTokenImpl,
         address trackerTokenImpl
-    ) {
-        unlockerBeacon = new UpgradeableBeacon(unlockerImpl);
-        futureTokenBeacon = new UpgradeableBeacon(futureTokenImpl);
-        trackerTokenBeacon = new UpgradeableBeacon(trackerTokenImpl);
+    ) Ownable(_msgSender()) {
+        unlockerBeacon = new UpgradeableBeacon(unlockerImpl, address(this));
+        futureTokenBeacon = new UpgradeableBeacon(
+            futureTokenImpl,
+            address(this)
+        );
+        trackerTokenBeacon = new UpgradeableBeacon(
+            trackerTokenImpl,
+            address(this)
+        );
     }
 
     function upgradeUnlocker(address newImpl) external onlyOwner {

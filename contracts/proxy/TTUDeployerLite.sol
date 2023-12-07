@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.20;
 
 import {ITTUDeployer} from "../interfaces/ITTUDeployer.sol";
 import {TTUV2BeaconManager} from "./TTUV2BeaconManager.sol";
@@ -18,6 +18,8 @@ contract TTUDeployerLite is ITTUDeployer, Ownable, IVersionable {
     ITTUFeeCollector public override feeCollector;
     mapping(string => bool) public registry;
 
+    constructor() Ownable(_msgSender()) {}
+
     function setBeaconManager(
         TTUV2BeaconManager _beaconManager
     ) external onlyOwner {
@@ -34,8 +36,11 @@ contract TTUDeployerLite is ITTUDeployer, Ownable, IVersionable {
     function deployTTSuite(
         address projectToken,
         string calldata projectId,
-        bool disableAutoUpgrade,
-        bool allowTransferableFT
+        bool isUpgradeable,
+        bool isTransferable,
+        bool isCancelable,
+        bool isHookable,
+        bool isWithdrawable
     )
         external
         returns (ITokenTableUnlockerV2, ITTFutureTokenV2, ITTTrackerTokenV2)
@@ -46,18 +51,21 @@ contract TTUDeployerLite is ITTUDeployer, Ownable, IVersionable {
         ITTFutureTokenV2 futureToken;
         ITokenTableUnlockerV2 unlocker;
         ITTTrackerTokenV2 trackerToken;
-        if (disableAutoUpgrade) {
+        if (!isUpgradeable) {
             futureToken = ITTFutureTokenV2(
                 Clones.clone(beaconManager.futureTokenBeacon().implementation())
             );
-            futureToken.initialize(projectToken, allowTransferableFT);
+            futureToken.initialize(projectToken, isTransferable);
             unlocker = ITokenTableUnlockerV2(
                 Clones.clone(beaconManager.unlockerBeacon().implementation())
             );
             unlocker.initialize(
                 projectToken,
                 address(futureToken),
-                address(this)
+                address(this),
+                isCancelable,
+                isHookable,
+                isWithdrawable
             );
             trackerToken = ITTTrackerTokenV2(
                 Clones.clone(
@@ -73,7 +81,7 @@ contract TTUDeployerLite is ITTUDeployer, Ownable, IVersionable {
                         abi.encodeWithSelector(
                             ITTFutureTokenV2.initialize.selector,
                             projectToken,
-                            allowTransferableFT
+                            isTransferable
                         )
                     )
                 )
@@ -86,7 +94,10 @@ contract TTUDeployerLite is ITTUDeployer, Ownable, IVersionable {
                             ITokenTableUnlockerV2.initialize.selector,
                             projectToken,
                             futureToken,
-                            this
+                            this,
+                            isCancelable,
+                            isHookable,
+                            isWithdrawable
                         )
                     )
                 )
@@ -103,7 +114,6 @@ contract TTUDeployerLite is ITTUDeployer, Ownable, IVersionable {
                 )
             );
         }
-
         unlocker.transferOwnership(msg.sender);
         futureToken.setAuthorizedMinterSingleUse(address(unlocker));
         emit TokenTableSuiteDeployed(
@@ -117,6 +127,6 @@ contract TTUDeployerLite is ITTUDeployer, Ownable, IVersionable {
     }
 
     function version() external pure returns (string memory) {
-        return "2.0.1";
+        return "2.5.0";
     }
 }

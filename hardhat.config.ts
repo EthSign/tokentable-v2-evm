@@ -143,7 +143,7 @@ export default {
     solidity: {
         compilers: [
             {
-                version: '0.8.17',
+                version: '0.8.20',
                 settings: {
                     optimizer: {
                         enabled: true,
@@ -154,7 +154,7 @@ export default {
         ]
     },
     zksolc: {
-        version: '1.3.14',
+        version: '1.3.17',
         settings: {
             optimizer: {
                 enabled: true,

@@ -1,18 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.20;
 
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {TokenTableUnlockerV2} from "../TokenTableUnlockerV2.sol";
 import {CustomERC2771Context} from "../../libraries/CustomERC2771Context.sol";
 
 contract TTUV2Gasless is TokenTableUnlockerV2, CustomERC2771Context {
-    function setTrustedForwarder(address forwarder) public virtual override {
-        _checkAccessControl(
-            bytes4(keccak256("setTrustedForwarder(address)")),
-            abi.encode(forwarder),
-            _msgSender(),
-            true
-        );
+    function setTrustedForwarder(
+        address forwarder
+    ) public virtual override onlyOwner {
         super.setTrustedForwarder(forwarder);
     }
 

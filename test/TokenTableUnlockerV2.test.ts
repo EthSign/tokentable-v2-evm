@@ -13,7 +13,9 @@ import {
     TokenTableUnlockerV2,
     MockERC20,
     TTFutureTokenV2,
-    TTUDeployer
+    TTUDeployerLite,
+    TTUV2BeaconManager,
+    TTTrackerTokenV2
 } from '../typechain-types'
 import {HardhatEthersSigner} from '@nomicfoundation/hardhat-ethers/signers'
 import {id, ZeroAddress, AbiCoder, encodeBytes32String} from 'ethers'
@@ -128,7 +130,13 @@ describe('V2', () => {
             linearEndTimestampRelative = 400n,
             linearBips = [0n, 1000n, 0n, 2000n, 0n, 4000n, 3000n],
             numOfUnlocksForEachLinear = [1n, 1n, 1n, 1n, 1n, 4n, 3n],
-            totalAmount = BIPS_PRECISION
+            totalAmount = BIPS_PRECISION,
+            preset = {
+                linearStartTimestampsRelative,
+                linearEndTimestampRelative,
+                linearBips,
+                numOfUnlocksForEachLinear
+            }
 
         let startTimestampAbsolute: bigint,
             amountSkipped: bigint,
@@ -143,9 +151,12 @@ describe('V2', () => {
             await unlocker.initialize(
                 await projectToken.getAddress(),
                 await futureToken.getAddress(),
-                ZeroAddress
+                ZeroAddress,
+                true,
+                true,
+                true
             )
-            await projectToken.mint(founder.address, BIPS_PRECISION)
+            await projectToken.mint(founder.address, BIPS_PRECISION * 2n)
             await projectToken
                 .connect(founder)
                 .approve(await unlocker.getAddress(), BIPS_PRECISION)
@@ -166,27 +177,18 @@ describe('V2', () => {
                 await expect(
                     unlocker
                         .connect(investor)
-                        .createPreset(
-                            presetId,
-                            linearStartTimestampsRelative,
-                            linearEndTimestampRelative,
-                            linearBips,
-                            numOfUnlocksForEachLinear
-                        )
-                ).to.be.revertedWithCustomError(unlocker, 'NotPermissioned')
+                        .createPresets([presetId], [preset], 0)
+                ).to.be.revertedWithCustomError(
+                    unlocker,
+                    'OwnableUnauthorizedAccount'
+                )
                 await expect(
                     await unlocker
                         .connect(founder)
-                        .createPreset(
-                            presetId,
-                            linearStartTimestampsRelative,
-                            linearEndTimestampRelative,
-                            linearBips,
-                            numOfUnlocksForEachLinear
-                        )
+                        .createPresets([presetId], [preset], 0)
                 )
                     .to.emit(unlocker, 'PresetCreated')
-                    .withArgs(presetId)
+                    .withArgs(presetId, 0)
                 const encodedPreset = await unlocker.getEncodedPreset(presetId)
                 const decodedPreset = AbiCoder.defaultAbiCoder().decode(
                     ['uint256[]', 'uint256', 'uint256[]', 'uint256[]'],
@@ -203,58 +205,65 @@ describe('V2', () => {
             it('should create an actual and enforce permissions, no skipping', async () => {
                 await unlocker
                     .connect(founder)
-                    .createPreset(
-                        presetId,
-                        linearStartTimestampsRelative,
-                        linearEndTimestampRelative,
-                        linearBips,
-                        numOfUnlocksForEachLinear
+                    .createPresets([presetId], [preset], 0)
+                await expect(
+                    unlocker.connect(investor).createActuals(
+                        [investor.address],
+                        [
+                            {
+                                presetId,
+                                startTimestampAbsolute,
+                                amountClaimed: amountSkipped,
+                                totalAmount
+                            }
+                        ],
+                        0
                     )
+                ).to.be.revertedWithCustomError(
+                    unlocker,
+                    'OwnableUnauthorizedAccount'
+                )
                 await expect(
-                    unlocker
-                        .connect(investor)
-                        .createActual(
-                            investor.address,
-                            presetId,
-                            startTimestampAbsolute,
-                            amountSkipped,
-                            totalAmount,
-                            amountDepositingNow
-                        )
-                ).to.be.revertedWithCustomError(unlocker, 'NotPermissioned')
-                await expect(
-                    unlocker
-                        .connect(founder)
-                        .createActual(
-                            investor.address,
-                            encodeBytes32String(''),
-                            startTimestampAbsolute,
-                            amountSkipped,
-                            totalAmount,
-                            amountDepositingNow
-                        )
+                    unlocker.connect(founder).createActuals(
+                        [investor.address],
+                        [
+                            {
+                                presetId: encodeBytes32String(''),
+                                startTimestampAbsolute,
+                                amountClaimed: amountSkipped,
+                                totalAmount
+                            }
+                        ],
+                        0
+                    )
                 ).to.be.revertedWithCustomError(unlocker, 'InvalidPresetFormat')
                 await expect(
-                    unlocker
-                        .connect(founder)
-                        .createActual(
-                            investor.address,
-                            presetId,
-                            startTimestampAbsolute,
-                            totalAmount,
-                            totalAmount,
-                            amountDepositingNow
-                        )
+                    unlocker.connect(founder).createActuals(
+                        [investor.address],
+                        [
+                            {
+                                presetId,
+                                startTimestampAbsolute,
+                                amountClaimed: totalAmount,
+                                totalAmount
+                            }
+                        ],
+                        0
+                    )
                 ).to.be.revertedWithCustomError(unlocker, 'InvalidSkipAmount')
                 const createActualTx = await unlocker
                     .connect(founder)
-                    .createActual(
-                        investor.address,
-                        presetId,
-                        startTimestampAbsolute,
-                        amountSkipped,
-                        totalAmount,
-                        amountDepositingNow
+                    .createActuals(
+                        [investor.address],
+                        [
+                            {
+                                presetId,
+                                startTimestampAbsolute,
+                                amountClaimed: amountSkipped,
+                                totalAmount
+                            }
+                        ],
+                        0
                     )
                 const actualId = (
                     await futureToken.tokensOfOwner(investor.address)
@@ -262,80 +271,41 @@ describe('V2', () => {
                 await expect(createActualTx)
                     .to.emit(unlocker, 'ActualCreated')
                     .withArgs(presetId, actualId, 0)
-                await expect(createActualTx)
-                    .to.emit(unlocker, 'TokensDeposited')
-                    .withArgs(amountDepositingNow, amountDepositingNow)
-            })
-
-            it('should deposit okay and enforce permissions', async () => {
-                await unlocker
-                    .connect(founder)
-                    .createPreset(
-                        presetId,
-                        linearStartTimestampsRelative,
-                        linearEndTimestampRelative,
-                        linearBips,
-                        numOfUnlocksForEachLinear
-                    )
-                await unlocker
-                    .connect(founder)
-                    .createActual(
-                        investor.address,
-                        presetId,
-                        startTimestampAbsolute,
-                        amountSkipped,
-                        totalAmount,
-                        amountDepositingNow
-                    )
-                await expect(
-                    unlocker.connect(investor).deposit(amountDepositingNow)
-                ).to.be.revertedWithCustomError(unlocker, 'NotPermissioned')
-                const balanceBefore = await projectToken.balanceOf(
-                    await unlocker.getAddress()
-                )
-                await expect(
-                    await unlocker.connect(founder).deposit(amountDepositingNow)
-                )
-                    .to.emit(unlocker, 'TokensDeposited')
-                    .withArgs(amountDepositingNow, amountDepositingNow)
-                const balanceAfter = await projectToken.balanceOf(
-                    await unlocker.getAddress()
-                )
-                expect(balanceAfter - balanceBefore).to.equal(
-                    amountDepositingNow
-                )
             })
 
             it('should let founder withdraw deposit and enforce permissions', async () => {
                 await unlocker
                     .connect(founder)
-                    .createPreset(
-                        presetId,
-                        linearStartTimestampsRelative,
-                        linearEndTimestampRelative,
-                        linearBips,
-                        numOfUnlocksForEachLinear
-                    )
-                await unlocker
+                    .createPresets([presetId], [preset], 0)
+                await unlocker.connect(founder).createActuals(
+                    [investor.address],
+                    [
+                        {
+                            presetId,
+                            startTimestampAbsolute,
+                            amountClaimed: amountSkipped,
+                            totalAmount
+                        }
+                    ],
+                    0
+                )
+                await projectToken
                     .connect(founder)
-                    .createActual(
-                        investor.address,
-                        presetId,
-                        startTimestampAbsolute,
-                        amountSkipped,
-                        totalAmount,
-                        amountDepositingNow
-                    )
-                await unlocker.connect(founder).deposit(amountDepositingNow)
+                    .transfer(await unlocker.getAddress(), amountDepositingNow)
                 await expect(
                     unlocker
                         .connect(investor)
                         .withdrawDeposit(amountDepositingNow)
-                ).to.be.revertedWithCustomError(unlocker, 'NotPermissioned')
+                ).to.be.revertedWithCustomError(
+                    unlocker,
+                    'OwnableUnauthorizedAccount'
+                )
                 await expect(
                     unlocker.connect(founder).withdrawDeposit(totalAmount + 1n)
-                ).to.be.revertedWithPanic('0x11')
-
+                ).to.be.revertedWithCustomError(
+                    projectToken,
+                    'ERC20InsufficientBalance'
+                )
                 const balanceOfFounderBefore = await projectToken.balanceOf(
                     founder.address
                 )
@@ -382,15 +352,18 @@ describe('V2', () => {
                 }
 
                 beforeEach(async () => {
-                    await unlocker
-                        .connect(founder)
-                        .createPreset(
-                            presetId,
-                            linearStartTimestampsRelative,
-                            linearEndTimestampRelative,
-                            linearBips,
-                            numOfUnlocksForEachLinear
-                        )
+                    await unlocker.connect(founder).createPresets(
+                        [presetId],
+                        [
+                            {
+                                linearStartTimestampsRelative,
+                                linearEndTimestampRelative,
+                                linearBips,
+                                numOfUnlocksForEachLinear
+                            }
+                        ],
+                        0
+                    )
                 })
 
                 describe('no skip', () => {
@@ -398,16 +371,18 @@ describe('V2', () => {
 
                     beforeEach(async () => {
                         amountSkipped = 0n
-                        await unlocker
-                            .connect(founder)
-                            .createActual(
-                                investor.address,
-                                presetId,
-                                startTimestampAbsolute,
-                                amountSkipped,
-                                totalAmount,
-                                amountDepositingNow
-                            )
+                        await unlocker.connect(founder).createActuals(
+                            [investor.address],
+                            [
+                                {
+                                    presetId,
+                                    startTimestampAbsolute,
+                                    amountClaimed: amountSkipped,
+                                    totalAmount
+                                }
+                            ],
+                            0
+                        )
                         actualId = (
                             await futureToken.tokensOfOwner(investor.address)
                         )[0]
@@ -440,16 +415,18 @@ describe('V2', () => {
                         console.log(
                             `           Random amount skipped: ${amountSkipped}`
                         )
-                        await unlocker
-                            .connect(founder)
-                            .createActual(
-                                investor.address,
-                                presetId,
-                                startTimestampAbsolute,
-                                amountSkipped,
-                                totalAmount,
-                                amountDepositingNow
-                            )
+                        await unlocker.connect(founder).createActuals(
+                            [investor.address],
+                            [
+                                {
+                                    presetId,
+                                    startTimestampAbsolute,
+                                    amountClaimed: amountSkipped,
+                                    totalAmount
+                                }
+                            ],
+                            0
+                        )
                         actualId = (
                             await futureToken.tokensOfOwner(investor.address)
                         )[0]
@@ -479,23 +456,19 @@ describe('V2', () => {
                 amountDepositingNow = 0n
                 await unlocker
                     .connect(founder)
-                    .createPreset(
-                        presetId,
-                        linearStartTimestampsRelative,
-                        linearEndTimestampRelative,
-                        linearBips,
-                        numOfUnlocksForEachLinear
-                    )
-                await unlocker
-                    .connect(founder)
-                    .createActual(
-                        investor.address,
-                        presetId,
-                        startTimestampAbsolute,
-                        amountSkipped,
-                        totalAmount,
-                        amountDepositingNow
-                    )
+                    .createPresets([presetId], [preset], 0)
+                await unlocker.connect(founder).createActuals(
+                    [investor.address],
+                    [
+                        {
+                            presetId,
+                            startTimestampAbsolute,
+                            amountClaimed: amountSkipped,
+                            totalAmount
+                        }
+                    ],
+                    0
+                )
                 const actualId = (
                     await futureToken.tokensOfOwner(investor.address)
                 )[0]
@@ -522,22 +495,31 @@ describe('V2', () => {
                     )
                 amountClaimed += deltaAmountClaimable
                 await expect(
-                    unlocker.connect(investor).claim(actualId, ZeroAddress)
-                ).to.be.revertedWithPanic('0x11')
+                    unlocker
+                        .connect(investor)
+                        .claim([actualId], [ZeroAddress], 0)
+                ).to.be.revertedWithCustomError(
+                    projectToken,
+                    'ERC20InsufficientBalance'
+                )
                 // Deposit more, should now claim
-                await unlocker.connect(founder).deposit(totalAmount)
+                await projectToken
+                    .connect(founder)
+                    .transfer(await unlocker.getAddress(), totalAmount)
                 balanceBefore = await projectToken.balanceOf(investor.address)
                 await expect(
                     await unlocker
                         .connect(investor)
-                        .claim(actualId, ZeroAddress)
+                        .claim([actualId], [ZeroAddress], 0)
                 )
                     .to.emit(unlocker, 'TokensClaimed')
                     .withArgs(
                         actualId,
                         investor.address,
                         investor.address,
-                        deltaAmountClaimable
+                        deltaAmountClaimable,
+                        0,
+                        0
                     )
                 balanceAfter = await projectToken.balanceOf(investor.address)
                 expect(balanceAfter - balanceBefore).to.equal(
@@ -564,14 +546,16 @@ describe('V2', () => {
                 await expect(
                     await unlocker
                         .connect(investor)
-                        .claim(actualId, ZeroAddress)
+                        .claim([actualId], [ZeroAddress], 0)
                 )
                     .to.emit(unlocker, 'TokensClaimed')
                     .withArgs(
                         actualId,
                         investor.address,
                         investor.address,
-                        deltaAmountClaimable
+                        deltaAmountClaimable,
+                        0,
+                        0
                     )
                 balanceAfter = await projectToken.balanceOf(investor.address)
                 expect(balanceAfter - balanceBefore).to.equal(
@@ -598,14 +582,16 @@ describe('V2', () => {
                 await expect(
                     await unlocker
                         .connect(investor)
-                        .claim(actualId, ZeroAddress)
+                        .claim([actualId], [ZeroAddress], 0)
                 )
                     .to.emit(unlocker, 'TokensClaimed')
                     .withArgs(
                         actualId,
                         investor.address,
                         investor.address,
-                        deltaAmountClaimable
+                        deltaAmountClaimable,
+                        0,
+                        0
                     )
                 balanceAfter = await projectToken.balanceOf(investor.address)
                 expect(balanceAfter - balanceBefore).to.equal(
@@ -632,14 +618,16 @@ describe('V2', () => {
                 await expect(
                     await unlocker
                         .connect(investor)
-                        .claim(actualId, ZeroAddress)
+                        .claim([actualId], [ZeroAddress], 0)
                 )
                     .to.emit(unlocker, 'TokensClaimed')
                     .withArgs(
                         actualId,
                         investor.address,
                         investor.address,
-                        deltaAmountClaimable
+                        deltaAmountClaimable,
+                        0,
+                        0
                     )
                 balanceAfter = await projectToken.balanceOf(investor.address)
                 expect(balanceAfter - balanceBefore).to.equal(
@@ -650,30 +638,32 @@ describe('V2', () => {
             it('should let founders or cancelables cancel and refund the correct amount', async () => {
                 await unlocker
                     .connect(founder)
-                    .createPreset(
-                        presetId,
-                        linearStartTimestampsRelative,
-                        linearEndTimestampRelative,
-                        linearBips,
-                        numOfUnlocksForEachLinear
-                    )
-                await unlocker
+                    .createPresets([presetId], [preset], 0)
+                await unlocker.connect(founder).createActuals(
+                    [investor.address],
+                    [
+                        {
+                            presetId,
+                            startTimestampAbsolute,
+                            amountClaimed: amountSkipped,
+                            totalAmount
+                        }
+                    ],
+                    0
+                )
+                await projectToken
                     .connect(founder)
-                    .createActual(
-                        investor.address,
-                        presetId,
-                        startTimestampAbsolute,
-                        amountSkipped,
-                        totalAmount,
-                        totalAmount
-                    )
+                    .transfer(await unlocker.getAddress(), totalAmount)
                 const actualId = (
                     await futureToken.tokensOfOwner(investor.address)
                 )[0]
                 // Should revert when calling without permission
                 await expect(
-                    unlocker.connect(investor).cancel(actualId)
-                ).to.be.revertedWithCustomError(unlocker, 'NotPermissioned')
+                    unlocker.connect(investor).cancel([actualId], 0)
+                ).to.be.revertedWithCustomError(
+                    unlocker,
+                    'OwnableUnauthorizedAccount'
+                )
                 // Time jump to beginning of third linear and claim
                 let claimTimestampAbsolute =
                     startTimestampAbsolute + linearStartTimestampsRelative[2]
@@ -690,7 +680,9 @@ describe('V2', () => {
                         BIPS_PRECISION,
                         totalAmount
                     )
-                await unlocker.connect(investor).claim(actualId, ZeroAddress)
+                await unlocker
+                    .connect(investor)
+                    .claim([actualId], [ZeroAddress], 0)
                 // Time jump to beginning of second to last linear and cancel
                 claimTimestampAbsolute =
                     startTimestampAbsolute + linearStartTimestampsRelative[5]
@@ -709,10 +701,10 @@ describe('V2', () => {
                     ) - amountSentToInvestor
                 const cancelTx = await unlocker
                     .connect(founder)
-                    .cancel(actualId)
+                    .cancel([actualId], 0)
                 await expect(cancelTx)
                     .to.emit(unlocker, 'ActualCancelled')
-                    .withArgs(actualId, amountShouldSendToInvestor)
+                    .withArgs(actualId, amountShouldSendToInvestor, 0)
             })
 
             /**
@@ -759,7 +751,7 @@ describe('V2', () => {
              */
         })
 
-        describe('PreviewToken', () => {
+        describe('trackerToken', () => {
             it('should reflect the correct claimable amount', async () => {
                 const TrackerFactory =
                     await ethers.getContractFactory('TTTrackerTokenV2')
@@ -768,33 +760,34 @@ describe('V2', () => {
                 // Set up two actuals
                 await unlocker
                     .connect(founder)
-                    .createPreset(
-                        presetId,
-                        linearStartTimestampsRelative,
-                        linearEndTimestampRelative,
-                        linearBips,
-                        numOfUnlocksForEachLinear
-                    )
-                await unlocker
+                    .createPresets([presetId], [preset], 0)
+                await unlocker.connect(founder).createActuals(
+                    [investor.address],
+                    [
+                        {
+                            presetId,
+                            startTimestampAbsolute,
+                            amountClaimed: amountSkipped,
+                            totalAmount
+                        }
+                    ],
+                    0
+                )
+                await unlocker.connect(founder).createActuals(
+                    [investor.address],
+                    [
+                        {
+                            presetId,
+                            startTimestampAbsolute,
+                            amountClaimed: amountSkipped,
+                            totalAmount
+                        }
+                    ],
+                    0
+                )
+                await projectToken
                     .connect(founder)
-                    .createActual(
-                        investor.address,
-                        presetId,
-                        startTimestampAbsolute,
-                        amountSkipped,
-                        totalAmount,
-                        amountDepositingNow
-                    )
-                await unlocker
-                    .connect(founder)
-                    .createActual(
-                        investor.address,
-                        presetId,
-                        startTimestampAbsolute,
-                        amountSkipped,
-                        totalAmount,
-                        amountDepositingNow
-                    )
+                    .transfer(await unlocker.getAddress(), totalAmount * 2n)
                 const actualIds = await futureToken.tokensOfOwner(
                     investor.address
                 )
@@ -816,8 +809,12 @@ describe('V2', () => {
                 expect(ttuDeltaClaimables).to.equal(
                     await trackerToken.balanceOf(investor.address)
                 )
-                await unlocker.connect(investor).claim(actualId0, ZeroAddress)
-                await unlocker.connect(investor).claim(actualId1, ZeroAddress)
+                await unlocker
+                    .connect(investor)
+                    .claim([actualId0], [ZeroAddress], 0)
+                await unlocker
+                    .connect(investor)
+                    .claim([actualId1], [ZeroAddress], 0)
                 // Skip again
                 await setNextBlockTimestamp(
                     startTimestampAbsolute +
@@ -838,30 +835,51 @@ describe('V2', () => {
         })
 
         describe('Deployer', () => {
-            let deployer: TTUDeployer
+            let deployer: TTUDeployerLite,
+                beaconManager: TTUV2BeaconManager,
+                trackerToken: TTTrackerTokenV2
             const projectId = 'adoaisdaposdmpoaindopi'
 
             beforeEach(async () => {
                 const DeployerFactory =
-                    await ethers.getContractFactory('TTUDeployer')
+                    await ethers.getContractFactory('TTUDeployerLite')
                 deployer = await DeployerFactory.deploy()
-                await projectToken.mint(founder.address, BIPS_PRECISION)
+                await projectToken.mint(founder.address, BIPS_PRECISION * 2n)
                 startTimestampAbsolute = BigInt(Date.now()) / 1000n + 20n
                 amountSkipped = 0n
                 amountDepositingNow = totalAmount / 2n
+
+                const TrackerFactory =
+                    await ethers.getContractFactory('TTTrackerTokenV2')
+                trackerToken = await TrackerFactory.deploy()
+
+                const BeaconManagerFactory =
+                    await ethers.getContractFactory('TTUV2BeaconManager')
+                beaconManager = await BeaconManagerFactory.deploy(
+                    await unlocker.getAddress(),
+                    await futureToken.getAddress(),
+                    await trackerToken.getAddress()
+                )
+
+                await deployer.setBeaconManager(
+                    await beaconManager.getAddress()
+                )
             })
 
             it('should deploy suite and complete beacon upgrade', async () => {
                 const [
                     unlockerAddress,
                     futureTokenAddress,
-                    previewTokenAddress
+                    trackerTokenAddress
                 ] = await deployer
                     .connect(founder)
                     .deployTTSuite.staticCall(
                         await projectToken.getAddress(),
                         projectId,
-                        false,
+                        true,
+                        true,
+                        true,
+                        true,
                         true
                     )
                 await deployer
@@ -869,7 +887,10 @@ describe('V2', () => {
                     .deployTTSuite(
                         await projectToken.getAddress(),
                         projectId,
-                        false,
+                        true,
+                        true,
+                        true,
+                        true,
                         true
                     )
                 const unlocker_ = await hre.ethers.getContractAt(
@@ -880,9 +901,9 @@ describe('V2', () => {
                     'TTFutureTokenV2',
                     futureTokenAddress
                 )
-                const trackerToken = await hre.ethers.getContractAt(
+                const trackerToken_ = await hre.ethers.getContractAt(
                     'TTTrackerTokenV2',
-                    previewTokenAddress
+                    trackerTokenAddress
                 )
                 // Setting stuff up to see if they work
                 await projectToken
@@ -890,33 +911,31 @@ describe('V2', () => {
                     .approve(await unlocker_.getAddress(), BIPS_PRECISION)
                 await unlocker_
                     .connect(founder)
-                    .createPreset(
-                        presetId,
-                        linearStartTimestampsRelative,
-                        linearEndTimestampRelative,
-                        linearBips,
-                        numOfUnlocksForEachLinear
-                    )
-                await unlocker_
-                    .connect(founder)
-                    .createActual(
-                        investor.address,
-                        presetId,
-                        startTimestampAbsolute,
-                        amountSkipped,
-                        totalAmount,
-                        amountDepositingNow
-                    )
-                await unlocker_
-                    .connect(founder)
-                    .createActual(
-                        investor.address,
-                        presetId,
-                        startTimestampAbsolute,
-                        amountSkipped,
-                        totalAmount,
-                        amountDepositingNow
-                    )
+                    .createPresets([presetId], [preset], 0)
+                await unlocker_.connect(founder).createActuals(
+                    [investor.address],
+                    [
+                        {
+                            presetId,
+                            startTimestampAbsolute,
+                            amountClaimed: amountSkipped,
+                            totalAmount
+                        }
+                    ],
+                    0
+                )
+                await unlocker_.connect(founder).createActuals(
+                    [investor.address],
+                    [
+                        {
+                            presetId,
+                            startTimestampAbsolute,
+                            amountClaimed: amountSkipped,
+                            totalAmount
+                        }
+                    ],
+                    0
+                )
                 const [actualId0, actualId1] = await futureToken_.tokensOfOwner(
                     investor.address
                 )
@@ -934,30 +953,33 @@ describe('V2', () => {
                     (await unlocker_.calculateAmountClaimable(actualId1))
                         .deltaAmountClaimable
                 expect(ttuDeltaClaimables).to.equal(
-                    await trackerToken.balanceOf(investor.address)
+                    await trackerToken_.balanceOf(investor.address)
                 )
                 // Deliberately upgrading to wrong address to test beacon, should fail everything
-                const beaconManager = await hre.ethers.getContractAt(
+                const beaconManager_ = await hre.ethers.getContractAt(
                     'TTUV2BeaconManager',
                     await deployer.beaconManager()
                 )
-                await beaconManager.upgradeUnlocker(
+                await beaconManager_.upgradeUnlocker(
                     await projectToken.getAddress()
                 )
-                await beaconManager.upgradeFutureToken(
+                await beaconManager_.upgradeFutureToken(
                     await projectToken.getAddress()
                 )
                 await expect(
-                    unlocker_
-                        .connect(founder)
-                        .createActual(
-                            investor.address,
-                            presetId,
-                            newStartTimestampAbsolute * 2n,
-                            amountSkipped,
-                            totalAmount,
-                            0
-                        )
+                    unlocker_.connect(founder).createActuals(
+                        [investor.address],
+                        [
+                            {
+                                presetId,
+                                startTimestampAbsolute:
+                                    newStartTimestampAbsolute * 2n,
+                                amountClaimed: amountSkipped,
+                                totalAmount
+                            }
+                        ],
+                        0
+                    )
                 ).to.be.revertedWithoutReason()
                 await expect(
                     futureToken_.tokensOfOwner(investor.address)
@@ -969,12 +991,15 @@ describe('V2', () => {
                 const [
                     unlockerAddress2,
                     futureTokenAddress2,
-                    previewTokenAddress2
+                    trackerTokenAddress2
                 ] = await deployer
                     .connect(founder)
                     .deployTTSuite.staticCall(
                         await projectToken.getAddress(),
                         projectId + projectId,
+                        false,
+                        true,
+                        true,
                         true,
                         true
                     )
@@ -983,6 +1008,9 @@ describe('V2', () => {
                     .deployTTSuite(
                         await projectToken.getAddress(),
                         projectId + projectId,
+                        false,
+                        true,
+                        true,
                         true,
                         true
                     )
@@ -996,7 +1024,7 @@ describe('V2', () => {
                 )
                 const trackerToken2 = await hre.ethers.getContractAt(
                     'TTTrackerTokenV2',
-                    previewTokenAddress2
+                    trackerTokenAddress2
                 )
                 // Set things up for clone
                 await projectToken
@@ -1004,33 +1032,31 @@ describe('V2', () => {
                     .approve(await unlocker2.getAddress(), BIPS_PRECISION)
                 await unlocker2
                     .connect(founder)
-                    .createPreset(
-                        presetId,
-                        linearStartTimestampsRelative,
-                        linearEndTimestampRelative,
-                        linearBips,
-                        numOfUnlocksForEachLinear
-                    )
-                await unlocker2
-                    .connect(founder)
-                    .createActual(
-                        investor.address,
-                        presetId,
-                        startTimestampAbsolute,
-                        amountSkipped,
-                        totalAmount,
-                        amountDepositingNow
-                    )
-                await unlocker2
-                    .connect(founder)
-                    .createActual(
-                        investor.address,
-                        presetId,
-                        startTimestampAbsolute,
-                        amountSkipped,
-                        totalAmount,
-                        amountDepositingNow
-                    )
+                    .createPresets([presetId], [preset], 0)
+                await unlocker2.connect(founder).createActuals(
+                    [investor.address],
+                    [
+                        {
+                            presetId,
+                            startTimestampAbsolute,
+                            amountClaimed: amountSkipped,
+                            totalAmount
+                        }
+                    ],
+                    0
+                )
+                await unlocker2.connect(founder).createActuals(
+                    [investor.address],
+                    [
+                        {
+                            presetId,
+                            startTimestampAbsolute,
+                            amountClaimed: amountSkipped,
+                            totalAmount
+                        }
+                    ],
+                    0
+                )
                 const [actualId02, actualId12] =
                     await futureToken2.tokensOfOwner(investor.address)
                 // Time skip
@@ -1051,27 +1077,30 @@ describe('V2', () => {
                     await trackerToken2.balanceOf(investor.address)
                 )
                 // Deliberately upgrading to wrong address to test beacon, should fail everything
-                const beaconManager = await hre.ethers.getContractAt(
+                const beaconManager_ = await hre.ethers.getContractAt(
                     'TTUV2BeaconManager',
                     await deployer.beaconManager()
                 )
-                await beaconManager.upgradeUnlocker(
+                await beaconManager_.upgradeUnlocker(
                     await projectToken.getAddress()
                 )
-                await beaconManager.upgradeFutureToken(
+                await beaconManager_.upgradeFutureToken(
                     await projectToken.getAddress()
                 )
                 // Clone should not revert
-                await unlocker2
-                    .connect(founder)
-                    .createActual(
-                        investor.address,
-                        presetId,
-                        newStartTimestampAbsolute * 2n,
-                        amountSkipped,
-                        totalAmount,
-                        0
-                    )
+                await unlocker2.connect(founder).createActuals(
+                    [investor.address],
+                    [
+                        {
+                            presetId,
+                            startTimestampAbsolute:
+                                newStartTimestampAbsolute * 2n,
+                            amountClaimed: amountSkipped,
+                            totalAmount
+                        }
+                    ],
+                    0
+                )
                 await futureToken2.tokensOfOwner(investor.address)
             })
         })

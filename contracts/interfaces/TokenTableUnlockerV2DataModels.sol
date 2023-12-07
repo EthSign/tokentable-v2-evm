@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.20;
 
 /**
  * @title TokenTableUnlockerV2DataModels
@@ -21,14 +21,14 @@ pragma solidity ^0.8.17;
  * builds on top of an existing preset. An actual contains information that is
  * different from one stakeholder to the next.
  */
-struct UnlockingSchedulePreset {
+struct Preset {
     uint256[] linearStartTimestampsRelative;
     uint256 linearEndTimestampRelative;
     uint256[] linearBips;
     uint256[] numOfUnlocksForEachLinear;
 }
 
-struct UnlockingScheduleActual {
+struct Actual {
     bytes32 presetId;
     uint256 startTimestampAbsolute;
     uint256 amountClaimed;

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.20;
 
 import {ITokenTableUnlockerV2} from "./ITokenTableUnlockerV2.sol";
 import {ITTFutureTokenV2} from "./ITTFutureTokenV2.sol";
@@ -47,15 +47,21 @@ interface ITTUDeployer {
      * @dev Emits: TokenTableSuiteDeployed. Throws: AlreadyDeployed().
      * @param projectToken The project token.
      * @param projectId A unique projectId (otherwise will revert).
-     * @param disableAutoUpgrade When set to false, a Clone instead of a
+     * @param isUpgradeable When set to false, a Clone instead of a
      * BeaconProxy is created to prevent future upgradeability.
-     * @param allowTransferableFT Allow FutureToken to be transferable.
+     * @param isTransferable Allow FutureToken to be transferable.
+     * @param isCancelable Allow Actuals to be cancelled in the Unlocker.
+     * @param isHookable Allows Unlocker to call an external hook.
+     * @param isWithdrawable Allows the founder to withdraw deposited funds.
      */
     function deployTTSuite(
         address projectToken,
         string calldata projectId,
-        bool disableAutoUpgrade,
-        bool allowTransferableFT
+        bool isUpgradeable,
+        bool isTransferable,
+        bool isCancelable,
+        bool isHookable,
+        bool isWithdrawable
     )
         external
         returns (ITokenTableUnlockerV2, ITTFutureTokenV2, ITTTrackerTokenV2);

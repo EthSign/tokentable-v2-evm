@@ -1,17 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.20;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {UnlockingScheduleActual, UnlockingSchedulePreset} from "../interfaces/TokenTableUnlockerV2DataModels.sol";
+import {Actual, Preset} from "../interfaces/TokenTableUnlockerV2DataModels.sol";
 import {ITokenTableUnlockerV2, IOwnable} from "../interfaces/ITokenTableUnlockerV2.sol";
-import {ITTAccessControlDelegate} from "../interfaces/ITTAccessControlDelegate.sol";
 import {ITTHook} from "../interfaces/ITTHook.sol";
 import {ITTFutureTokenV2} from "./TTFutureTokenV2.sol";
 import {TTUProjectTokenStorage} from "./TTUProjectTokenStorage.sol";
 import {ITTUDeployer} from "../interfaces/ITTUDeployer.sol";
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 contract TokenTableUnlockerV2 is
     OwnableUpgradeable,
@@ -25,16 +24,13 @@ contract TokenTableUnlockerV2 is
 
     ITTUDeployer public deployer;
     ITTFutureTokenV2 public futureToken;
-    ITTAccessControlDelegate public accessControlDelegate;
     ITTHook public hook;
-    uint256 public pool;
     bool public override isCancelable;
-    bool public override isAccessControllable;
     bool public override isHookable;
+    bool public override isWithdrawable;
 
-    mapping(bytes32 => UnlockingSchedulePreset)
-        internal _unlockingSchedulePresets;
-    mapping(uint256 => UnlockingScheduleActual) public unlockingScheduleActuals;
+    mapping(bytes32 => Preset) internal _presets;
+    mapping(uint256 => Actual) public actuals;
     mapping(uint256 => uint256)
         public pendingAmountClaimableForCancelledActuals;
 
@@ -47,288 +43,117 @@ contract TokenTableUnlockerV2 is
     function initialize(
         address projectToken,
         address futureToken_,
-        address deployer_
+        address deployer_,
+        bool isCancelable_,
+        bool isHookable_,
+        bool isWithdrawable_
     ) external override initializer {
-        __Ownable_init_unchained();
+        __Ownable_init_unchained(_msgSender());
         _initializeSE(projectToken);
         futureToken = ITTFutureTokenV2(futureToken_);
         deployer = ITTUDeployer(deployer_);
         __ReentrancyGuard_init_unchained();
-        isCancelable = true;
-        isAccessControllable = true;
-        isHookable = true;
+        isCancelable = isCancelable_;
+        isHookable = isHookable_;
+        isWithdrawable = isWithdrawable_;
     }
 
     // solhint-disable-next-line ordering
-    function createPreset(
-        bytes32 presetId,
-        uint256[] calldata linearStartTimestampsRelative,
-        uint256 linearEndTimestampRelative,
-        uint256[] calldata linearBips,
-        uint256[] calldata numOfUnlocksForEachLinear
-    ) external virtual override {
-        _checkAccessControl(
-            TokenTableUnlockerV2.createPreset.selector,
-            "",
-            _msgSender(),
-            true
-        );
-        _createPreset(
-            presetId,
-            linearStartTimestampsRelative,
-            linearEndTimestampRelative,
-            linearBips,
-            numOfUnlocksForEachLinear
-        );
-        _callHook(TokenTableUnlockerV2.createPreset.selector, msg.data);
-    }
-
-    function batchCreatePreset(
-        bytes32[] calldata presetId,
-        uint256[][] calldata linearStartTimestampsRelative,
-        uint256[] calldata linearEndTimestampRelative,
-        uint256[][] calldata linearBips,
-        uint256[][] memory numOfUnlocksForEachLinear
-    ) external virtual override {
-        _checkAccessControl(
-            TokenTableUnlockerV2.batchCreatePreset.selector,
-            "",
-            _msgSender(),
-            true
-        );
-        for (uint256 i = 0; i < presetId.length; i++) {
-            _createPreset(
-                presetId[i],
-                linearStartTimestampsRelative[i],
-                linearEndTimestampRelative[i],
-                linearBips[i],
-                numOfUnlocksForEachLinear[i]
-            );
-        }
-        _callHook(TokenTableUnlockerV2.batchCreatePreset.selector, msg.data);
-    }
-
-    function createActual(
-        address recipient,
-        bytes32 presetId,
-        uint256 startTimestampAbsolute,
-        uint256 amountSkipped,
-        uint256 totalAmount,
-        uint256 amountDepositingNow
-    ) external virtual override {
-        _checkAccessControl(
-            TokenTableUnlockerV2.createActual.selector,
-            "",
-            _msgSender(),
-            true
-        );
-        _createActual(
-            recipient,
-            presetId,
-            startTimestampAbsolute,
-            amountSkipped,
-            totalAmount,
-            0
-        );
-        _deposit(amountDepositingNow);
-        _callHook(TokenTableUnlockerV2.createActual.selector, msg.data);
-    }
-
-    function batchCreateActual(
-        address[] calldata recipient,
-        bytes32[] calldata presetId,
-        uint256[] calldata startTimestampAbsolute,
-        uint256[] calldata amountSkipped,
-        uint256[] calldata totalAmount,
-        uint256 amountDepositingNow
-    ) external virtual override {
-        bytes4 selector = bytes4(
-            keccak256(
-                "batchCreateActual(address[],bytes32[],uint256[],uint256[],uint256[],uint256[])"
-            )
-        );
-        _checkAccessControl(selector, "", _msgSender(), true);
-        for (uint256 i = 0; i < presetId.length; i++) {
-            _createActual(
-                recipient[i],
-                presetId[i],
-                startTimestampAbsolute[i],
-                amountSkipped[i],
-                totalAmount[i],
-                0
-            );
-        }
-        _deposit(amountDepositingNow);
-        _callHook(selector, msg.data);
-    }
-
-    function batchCreateActual(
-        address[] calldata recipient,
-        bytes32[] calldata presetId,
-        uint256[] calldata startTimestampAbsolute,
-        uint256[] calldata amountSkipped,
-        uint256[] calldata totalAmount,
-        uint256 amountDepositingNow,
+    function createPresets(
+        bytes32[] memory presetIds,
+        Preset[] memory presets,
         uint256 batchId
-    ) external virtual override {
-        bytes4 selector = bytes4(
-            keccak256(
-                "batchCreateActual(address[],bytes32[],uint256[],uint256[],uint256[],uint256[])"
-            )
-        );
-        _checkAccessControl(selector, "", _msgSender(), true);
-        for (uint256 i = 0; i < presetId.length; i++) {
-            _createActual(
-                recipient[i],
-                presetId[i],
-                startTimestampAbsolute[i],
-                amountSkipped[i],
-                totalAmount[i],
-                batchId
-            );
+    ) external virtual override onlyOwner {
+        for (uint256 i = 0; i < presetIds.length; i++) {
+            _createPreset(presetIds[i], presets[i], batchId);
         }
-        _deposit(amountDepositingNow);
-        _callHook(selector, msg.data);
+        _callHook(TokenTableUnlockerV2.createPresets.selector, msg.data);
     }
 
-    function deposit(uint256 amount) external virtual override {
-        _checkAccessControl(
-            TokenTableUnlockerV2.deposit.selector,
-            abi.encode(amount),
-            _msgSender(),
-            true
-        );
-        _deposit(amount);
-        _callHook(TokenTableUnlockerV2.deposit.selector, msg.data);
+    function createActuals(
+        address[] memory recipients,
+        Actual[] memory actuals_,
+        uint256 batchId
+    ) external virtual override onlyOwner {
+        for (uint256 i = 0; i < recipients.length; i++) {
+            _createActual(recipients[i], actuals_[i], batchId);
+        }
+        _callHook(this.createActuals.selector, msg.data);
     }
 
-    function withdrawDeposit(uint256 amount) external virtual override {
-        _checkAccessControl(
-            TokenTableUnlockerV2.withdrawDeposit.selector,
-            abi.encode(amount),
-            _msgSender(),
-            true
-        );
-        pool -= amount;
+    function withdrawDeposit(
+        uint256 amount
+    ) external virtual override onlyOwner {
+        if (!isWithdrawable) revert NotPermissioned();
         IERC20(getProjectToken()).safeTransfer(_msgSender(), amount);
         emit TokensWithdrawn(_msgSender(), amount);
         _callHook(TokenTableUnlockerV2.withdrawDeposit.selector, msg.data);
     }
 
     function claim(
-        uint256 actualId,
-        address overrideRecipient
+        uint256[] calldata actualIds,
+        address[] calldata claimTos,
+        uint256 batchId
     ) external virtual override nonReentrant {
-        _checkAccessControl(
-            TokenTableUnlockerV2.claim.selector,
-            abi.encode(actualId, overrideRecipient),
-            _msgSender(),
-            false
-        );
-        _claim(actualId, overrideRecipient);
+        for (uint256 i = 0; i < actualIds.length; i++) {
+            if (futureToken.ownerOf(actualIds[i]) != _msgSender()) {
+                revert NotPermissioned();
+            }
+            _claim(actualIds[i], claimTos[i], batchId);
+        }
         _callHook(TokenTableUnlockerV2.claim.selector, msg.data);
     }
 
-    function batchClaim(
-        uint256[] calldata actualId,
-        address[] calldata overrideRecipient
-    ) external virtual override nonReentrant {
-        _checkAccessControl(
-            TokenTableUnlockerV2.batchClaim.selector,
-            abi.encode(actualId, overrideRecipient),
-            _msgSender(),
-            false
-        );
-        for (uint256 i = 0; i < actualId.length; i++) {
-            _claim(actualId[i], overrideRecipient[i]);
-        }
-        _callHook(TokenTableUnlockerV2.batchClaim.selector, msg.data);
-    }
-
     function cancel(
-        uint256 actualId
+        uint256[] calldata actualIds,
+        uint256 batchId
     )
         external
         virtual
         override
-        nonReentrant
-        returns (uint256 pendingAmountClaimable)
+        onlyOwner
+        returns (uint256[] memory pendingAmountClaimables)
     {
         if (!isCancelable) revert NotPermissioned();
-        _checkAccessControl(
-            TokenTableUnlockerV2.cancel.selector,
-            abi.encode(actualId),
-            _msgSender(),
-            true
-        );
-        (uint256 deltaAmountClaimable, ) = calculateAmountClaimable(actualId);
-        emit ActualCancelled(actualId, deltaAmountClaimable);
-        delete unlockingScheduleActuals[actualId];
+        pendingAmountClaimables = new uint256[](actualIds.length);
+        for (uint256 i = 0; i < actualIds.length; i++) {
+            uint256 actualId = actualIds[i];
+            (uint256 deltaAmountClaimable, ) = calculateAmountClaimable(
+                actualId
+            );
+            pendingAmountClaimableForCancelledActuals[
+                actualId
+            ] += deltaAmountClaimable;
+            pendingAmountClaimables[i] = deltaAmountClaimable;
+            emit ActualCancelled(actualId, deltaAmountClaimable, batchId);
+            delete actuals[actualId];
+        }
         _callHook(TokenTableUnlockerV2.cancel.selector, msg.data);
-        return deltaAmountClaimable;
     }
 
-    function setAccessControlDelegate(
-        address accessControlDelegate_
-    ) external virtual override onlyOwner {
-        if (!isAccessControllable) revert NotPermissioned();
-        accessControlDelegate = ITTAccessControlDelegate(
-            accessControlDelegate_
-        );
-        _callHook(
-            TokenTableUnlockerV2.setAccessControlDelegate.selector,
-            msg.data
-        );
-    }
-
-    function setHook(address hook_) external virtual override {
+    function setHook(address hook_) external virtual override onlyOwner {
         if (!isHookable) revert NotPermissioned();
-        _checkAccessControl(
-            TokenTableUnlockerV2.setHook.selector,
-            "",
-            _msgSender(),
-            true
-        );
         hook = ITTHook(hook_);
         _callHook(TokenTableUnlockerV2.setHook.selector, msg.data);
     }
 
-    function disableCancel() external virtual override {
-        _checkAccessControl(
-            TokenTableUnlockerV2.disableCancel.selector,
-            "",
-            _msgSender(),
-            true
-        );
+    function disableCancel() external virtual override onlyOwner {
         isCancelable = false;
+        emit CancelDisabled();
         _callHook(TokenTableUnlockerV2.disableCancel.selector, msg.data);
     }
 
-    function disableAccessControlDelegate() external virtual override {
-        _checkAccessControl(
-            TokenTableUnlockerV2.disableAccessControlDelegate.selector,
-            "",
-            _msgSender(),
-            true
-        );
-        isAccessControllable = false;
-        accessControlDelegate = ITTAccessControlDelegate(address(0));
-        _callHook(
-            TokenTableUnlockerV2.disableAccessControlDelegate.selector,
-            msg.data
-        );
-    }
-
-    function disableHook() external virtual override {
-        _checkAccessControl(
-            TokenTableUnlockerV2.disableHook.selector,
-            "",
-            _msgSender(),
-            true
-        );
+    function disableHook() external virtual override onlyOwner {
         isHookable = false;
+        emit HookDisabled();
         _callHook(TokenTableUnlockerV2.disableHook.selector, msg.data);
         hook = ITTHook(address(0));
+    }
+
+    function disableWithdraw() external virtual override onlyOwner {
+        isWithdrawable = false;
+        emit WithdrawDisabled();
+        _callHook(TokenTableUnlockerV2.disableWithdraw.selector, msg.data);
     }
 
     function transferOwnership(
@@ -352,63 +177,33 @@ contract TokenTableUnlockerV2 is
 
     function _createPreset(
         bytes32 presetId,
-        uint256[] memory linearStartTimestampsRelative,
-        uint256 linearEndTimestampRelative,
-        uint256[] memory linearBips,
-        uint256[] memory numOfUnlocksForEachLinear
+        Preset memory preset,
+        uint256 batchId
     ) internal virtual {
-        if (!_presetIsEmpty(_unlockingSchedulePresets[presetId]))
-            revert PresetExists();
-        UnlockingSchedulePreset memory newPreset = UnlockingSchedulePreset({
-            linearStartTimestampsRelative: linearStartTimestampsRelative,
-            linearEndTimestampRelative: linearEndTimestampRelative,
-            linearBips: linearBips,
-            numOfUnlocksForEachLinear: numOfUnlocksForEachLinear
-        });
-        if (!_presetHasValidFormat(newPreset)) revert InvalidPresetFormat();
-        _unlockingSchedulePresets[presetId] = newPreset;
-        emit PresetCreated(presetId);
+        if (!_presetIsEmpty(_presets[presetId])) revert PresetExists();
+        if (!_presetHasValidFormat(preset)) revert InvalidPresetFormat();
+        _presets[presetId] = preset;
+        emit PresetCreated(presetId, batchId);
     }
 
     function _createActual(
         address recipient,
-        bytes32 presetId,
-        uint256 startTimestampAbsolute,
-        uint256 amountSkipped,
-        uint256 totalAmount,
+        Actual memory actual,
         uint256 batchId
     ) internal virtual {
         uint256 actualId = futureToken.safeMint(recipient);
-        UnlockingScheduleActual storage actual = unlockingScheduleActuals[
-            actualId
-        ];
-        UnlockingSchedulePreset storage preset = _unlockingSchedulePresets[
-            presetId
-        ];
+        Preset storage preset = _presets[actual.presetId];
         if (_presetIsEmpty(preset)) revert InvalidPresetFormat();
-        if (amountSkipped >= totalAmount) revert InvalidSkipAmount();
-        actual.presetId = presetId;
-        actual.startTimestampAbsolute = startTimestampAbsolute;
-        actual.amountClaimed = amountSkipped;
-        actual.totalAmount = totalAmount;
-        emit ActualCreated(presetId, actualId, batchId);
-    }
-
-    function _deposit(uint256 amount) internal {
-        uint256 amountPostDeduction = _chargeFees(amount);
-        if (amountPostDeduction == 0) return;
-        pool += amountPostDeduction;
-        IERC20(getProjectToken()).safeTransferFrom(
-            _msgSender(),
-            address(this),
-            amountPostDeduction
-        );
-        emit TokensDeposited(amount, amountPostDeduction);
+        if (actual.amountClaimed >= actual.totalAmount)
+            revert InvalidSkipAmount();
+        actuals[actualId] = actual;
+        emit ActualCreated(actual.presetId, actualId, batchId);
     }
 
     function _claim(
         uint256 actualId,
-        address overrideRecipient
+        address overrideRecipient,
+        uint256 batchId
     ) internal virtual {
         uint256 deltaAmountClaimable;
         address recipient;
@@ -422,7 +217,6 @@ contract TokenTableUnlockerV2 is
         ];
         if (deltaAmountClaimable != 0) {
             pendingAmountClaimableForCancelledActuals[actualId] = 0;
-            pool -= deltaAmountClaimable;
             IERC20(getProjectToken()).safeTransfer(
                 recipient,
                 deltaAmountClaimable
@@ -430,11 +224,14 @@ contract TokenTableUnlockerV2 is
         } else {
             deltaAmountClaimable = _updateActualAndSend(actualId, recipient);
         }
+        uint256 feesCharged = _chargeFees(deltaAmountClaimable);
         emit TokensClaimed(
             actualId,
             _msgSender(),
             recipient,
-            deltaAmountClaimable
+            deltaAmountClaimable,
+            feesCharged,
+            batchId
         );
     }
 
@@ -450,9 +247,7 @@ contract TokenTableUnlockerV2 is
     function getEncodedPreset(
         bytes32 presetId
     ) external view virtual override returns (bytes memory) {
-        UnlockingSchedulePreset memory preset = _unlockingSchedulePresets[
-            presetId
-        ];
+        Preset memory preset = _presets[presetId];
         return
             abi.encode(
                 preset.linearStartTimestampsRelative,
@@ -476,12 +271,8 @@ contract TokenTableUnlockerV2 is
         returns (uint256 deltaAmountClaimable, uint256 updatedAmountClaimed)
     {
         uint256 precisionDecimals = 10 ** 5;
-        UnlockingScheduleActual memory actual = unlockingScheduleActuals[
-            actualId
-        ];
-        UnlockingSchedulePreset memory preset = _unlockingSchedulePresets[
-            actual.presetId
-        ];
+        Actual memory actual = actuals[actualId];
+        Preset memory preset = _presets[actual.presetId];
         uint256 i;
         uint256 latestIncompleteLinearIndex;
         if (block.timestamp < actual.startTimestampAbsolute)
@@ -559,26 +350,24 @@ contract TokenTableUnlockerV2 is
             uint256 deltaAmountClaimable,
             uint256 updatedAmountClaimed
         ) = calculateAmountClaimable(actualId);
-        UnlockingScheduleActual storage actual = unlockingScheduleActuals[
-            actualId
-        ];
+        Actual storage actual = actuals[actualId];
         actual.amountClaimed = updatedAmountClaimed;
-        pool -= deltaAmountClaimable;
         IERC20(getProjectToken()).safeTransfer(recipient, deltaAmountClaimable);
         deltaAmountClaimable_ = deltaAmountClaimable;
     }
 
     function _chargeFees(
         uint256 amount
-    ) internal returns (uint256 amountPostDeduction) {
-        amountPostDeduction = amount;
-        if (address(deployer) != address(0)) {
-            uint256 feesCollected = deployer.feeCollector().getFee(
+    ) internal returns (uint256 feesCollected) {
+        if (
+            address(deployer) != address(0) &&
+            address(deployer.feeCollector()) != address(0)
+        ) {
+            feesCollected = deployer.feeCollector().getFee(
                 address(this),
-                amountPostDeduction
+                amount
             );
             if (feesCollected > 0) {
-                amountPostDeduction -= feesCollected;
                 IERC20(getProjectToken()).safeTransfer(
                     deployer.feeCollector().owner(),
                     feesCollected
@@ -587,48 +376,8 @@ contract TokenTableUnlockerV2 is
         }
     }
 
-    function _checkAccessControl(
-        bytes4 selector,
-        bytes memory context,
-        address operator,
-        bool onlyOwner
-    ) internal view {
-        if (address(accessControlDelegate) == address(0)) {
-            if (selector == this.claim.selector) {
-                (uint256 actualId, ) = abi.decode(context, (uint256, address));
-                if (futureToken.ownerOf(actualId) != _msgSender()) {
-                    revert NotPermissioned();
-                }
-            } else if (selector == this.batchClaim.selector) {
-                (uint256[] memory actualId, ) = abi.decode(
-                    context,
-                    (uint256[], uint256[])
-                );
-                for (uint256 i = 0; i < actualId.length; i++) {
-                    if (futureToken.ownerOf(actualId[i]) != _msgSender()) {
-                        revert NotPermissioned();
-                    }
-                }
-            }
-            if (onlyOwner && _msgSender() == owner()) {
-                return;
-            } else if (onlyOwner && _msgSender() != owner()) {
-                revert NotPermissioned();
-            } else {
-                return;
-            }
-        }
-        if (
-            !accessControlDelegate.hasPermissionToPerform(
-                selector,
-                context,
-                operator
-            )
-        ) revert NotPermissioned();
-    }
-
     function _presetIsEmpty(
-        UnlockingSchedulePreset storage preset
+        Preset storage preset
     ) internal view returns (bool) {
         return
             preset.linearBips.length *
@@ -639,7 +388,7 @@ contract TokenTableUnlockerV2 is
     }
 
     function _presetHasValidFormat(
-        UnlockingSchedulePreset memory preset
+        Preset memory preset
     ) internal pure returns (bool) {
         uint256 total;
         for (uint256 i = 0; i < preset.linearBips.length; i++) {

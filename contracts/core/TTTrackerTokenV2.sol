@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.20;
 
 import {ITTTrackerTokenV2} from "../interfaces/ITTTrackerTokenV2.sol";
 import {TokenTableUnlockerV2} from "./TokenTableUnlockerV2.sol";
@@ -78,24 +78,21 @@ contract TTTrackerTokenV2 is ITTTrackerTokenV2, IERC20Metadata, Initializable {
     /**
      * @dev This operation is not allowed/implemented on purpose.
      */
-    function transfer(address to, uint256 amount) external returns (bool) {
+    function transfer(address, uint256) external pure returns (bool) {
         return false;
     }
 
     /**
      * @dev This operation is not allowed/implemented on purpose.
      */
-    function allowance(
-        address owner,
-        address spender
-    ) external view returns (uint256) {
+    function allowance(address, address) external pure returns (uint256) {
         return 0;
     }
 
     /**
      * @dev This operation is not allowed/implemented on purpose.
      */
-    function approve(address spender, uint256 amount) external returns (bool) {
+    function approve(address, uint256) external pure returns (bool) {
         return false;
     }
 
@@ -103,10 +100,10 @@ contract TTTrackerTokenV2 is ITTTrackerTokenV2, IERC20Metadata, Initializable {
      * @dev This operation is not allowed/implemented on purpose.
      */
     function transferFrom(
-        address from,
-        address to,
-        uint256 amount
-    ) external returns (bool) {
+        address,
+        address,
+        uint256
+    ) external pure returns (bool) {
         return false;
     }
 

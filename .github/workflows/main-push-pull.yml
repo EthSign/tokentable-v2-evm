@@ -36,14 +36,8 @@ jobs:
       - name: Build application
         run: npm run build
 
-      - name: Enable initializers for unit testing
-        run: sed -i 's/_disableInitializers();/\/\/_disableInitializers();/g' contracts/core/TokenTableUnlockerV2.sol && sed -i 's/_disableInitializers();/\/\/_disableInitializers();/g' contracts/core/TTTrackerTokenV2.sol && sed -i 's/_dummyInitialize();/\/\/_dummyInitialize();/g' contracts/core/TTFutureTokenV2.sol
-
       - name: Run tests
         run: npm test
-
-      - name: Revert changes made for unit testing
-        run: sed -i 's/\/\/_disableInitializers();/_disableInitializers();/g' contracts/core/TokenTableUnlockerV2.sol && sed -i 's/\/\/_disableInitializers();/_disableInitializers();/g' contracts/core/TTTrackerTokenV2.sol && sed -i 's/\/\/_dummyInitialize();/_dummyInitialize();/g' contracts/core/TTFutureTokenV2.sol
 
   TypeScript-Static-Analyis:
     runs-on: ubuntu-latest

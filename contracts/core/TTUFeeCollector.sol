@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.20;
 
 import {ITTUFeeCollector, IOwnable} from "../interfaces/ITTUFeeCollector.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
@@ -13,6 +13,8 @@ contract TTUFeeCollector is ITTUFeeCollector, Ownable {
 
     uint256 public defaultFeesBips;
     mapping(address => uint256) internal _customFeesBips;
+
+    constructor() Ownable(_msgSender()) {}
 
     function withdrawFee(IERC20 token, uint256 amount) external onlyOwner {
         token.safeTransfer(owner(), amount);
