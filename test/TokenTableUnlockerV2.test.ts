@@ -135,7 +135,8 @@ describe('V2', () => {
                 linearStartTimestampsRelative,
                 linearEndTimestampRelative,
                 linearBips,
-                numOfUnlocksForEachLinear
+                numOfUnlocksForEachLinear,
+                stream: false
             }
 
         let startTimestampAbsolute: bigint,
@@ -359,7 +360,8 @@ describe('V2', () => {
                                 linearStartTimestampsRelative,
                                 linearEndTimestampRelative,
                                 linearBips,
-                                numOfUnlocksForEachLinear
+                                numOfUnlocksForEachLinear,
+                                stream: false
                             }
                         ],
                         0

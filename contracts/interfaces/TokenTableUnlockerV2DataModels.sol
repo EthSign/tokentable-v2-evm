@@ -26,6 +26,7 @@ struct Preset {
     uint256 linearEndTimestampRelative;
     uint256[] linearBips;
     uint256[] numOfUnlocksForEachLinear;
+    bool stream;
 }
 
 struct Actual {

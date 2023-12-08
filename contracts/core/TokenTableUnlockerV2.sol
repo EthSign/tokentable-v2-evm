@@ -253,7 +253,8 @@ contract TokenTableUnlockerV2 is
                 preset.linearStartTimestampsRelative,
                 preset.linearEndTimestampRelative,
                 preset.linearBips,
-                preset.numOfUnlocksForEachLinear
+                preset.numOfUnlocksForEachLinear,
+                preset.stream
             );
     }
 
@@ -270,9 +271,10 @@ contract TokenTableUnlockerV2 is
         override
         returns (uint256 deltaAmountClaimable, uint256 updatedAmountClaimed)
     {
-        uint256 precisionDecimals = 10 ** 5;
+        uint256 tokenPrecisionDecimals = 10 ** 5;
         Actual memory actual = actuals[actualId];
         Preset memory preset = _presets[actual.presetId];
+        uint256 timePrecisionDecimals = preset.stream ? 10 ** 5 : 1;
         uint256 i;
         uint256 latestIncompleteLinearIndex;
         if (block.timestamp < actual.startTimestampAbsolute)
@@ -291,7 +293,9 @@ contract TokenTableUnlockerV2 is
         }
         // 1. calculate completed linear index claimables in bips
         for (i = 0; i < latestIncompleteLinearIndex; i++) {
-            updatedAmountClaimed += preset.linearBips[i] * precisionDecimals;
+            updatedAmountClaimed +=
+                preset.linearBips[i] *
+                tokenPrecisionDecimals;
         }
         // 2. calculate incomplete linear index claimable in bips
         uint256 latestIncompleteLinearDuration = 0;
@@ -321,17 +325,19 @@ contract TokenTableUnlockerV2 is
                 preset.linearStartTimestampsRelative[
                     latestIncompleteLinearIndex
                 ];
-        uint256 numOfClaimableUnlocksInIncompleteLinear = latestIncompleteLinearClaimableTimestampRelative /
+        uint256 numOfClaimableUnlocksInIncompleteLinear = (latestIncompleteLinearClaimableTimestampRelative *
+                timePrecisionDecimals) /
                 latestIncompleteLinearIntervalForEachUnlock;
         updatedAmountClaimed +=
             (preset.linearBips[latestIncompleteLinearIndex] *
-                precisionDecimals *
+                tokenPrecisionDecimals *
                 numOfClaimableUnlocksInIncompleteLinear) /
-            preset.numOfUnlocksForEachLinear[latestIncompleteLinearIndex];
+            preset.numOfUnlocksForEachLinear[latestIncompleteLinearIndex] /
+            timePrecisionDecimals;
         updatedAmountClaimed =
             (updatedAmountClaimed * actual.totalAmount) /
             BIPS_PRECISION /
-            precisionDecimals;
+            tokenPrecisionDecimals;
         if (updatedAmountClaimed > actual.totalAmount) {
             updatedAmountClaimed = actual.totalAmount;
         }

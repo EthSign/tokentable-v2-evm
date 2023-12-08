@@ -151,7 +151,7 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
      * returned directly in Solidity.
      * @dev To decode in JS, use:
      *  ethers.utils.defaultAbiCoder.decode(
-     *      ['uint256[]', 'uint256', 'uint256[]', 'uint256[]'],
+     *      ['uint256[]', 'uint256', 'uint256[]', 'uint256[]', 'bool'],
      *      encodedPreset
      *  )
      * @param presetId The ID of the preset we are trying to read.
