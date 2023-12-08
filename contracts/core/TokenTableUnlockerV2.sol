@@ -20,11 +20,11 @@ contract TokenTableUnlockerV2 is
 {
     using SafeERC20 for IERC20;
 
-    uint256 public constant BIPS_PRECISION = 10 ** 4; // down to 0.01%
+    uint256 public constant override BIPS_PRECISION = 10 ** 4; // down to 0.01%
 
-    ITTUDeployer public deployer;
-    ITTFutureTokenV2 public futureToken;
-    ITTHook public hook;
+    ITTUDeployer public override deployer;
+    ITTFutureTokenV2 public override futureToken;
+    ITTHook public override hook;
     bool public override isCancelable;
     bool public override isHookable;
     bool public override isWithdrawable;
@@ -32,7 +32,8 @@ contract TokenTableUnlockerV2 is
     mapping(bytes32 => Preset) internal _presets;
     mapping(uint256 => Actual) public actuals;
     mapping(uint256 => uint256)
-        public pendingAmountClaimableForCancelledActuals;
+        public
+        override pendingAmountClaimableForCancelledActuals;
 
     constructor() {
         if (block.chainid != 33133) {
@@ -131,9 +132,9 @@ contract TokenTableUnlockerV2 is
         _callHook(TokenTableUnlockerV2.cancel.selector, msg.data);
     }
 
-    function setHook(address hook_) external virtual override onlyOwner {
+    function setHook(ITTHook hook_) external virtual override onlyOwner {
         if (!isHookable) revert NotPermissioned();
-        hook = ITTHook(hook_);
+        hook = hook_;
         _callHook(TokenTableUnlockerV2.setHook.selector, msg.data);
     }
 

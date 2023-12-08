@@ -7,14 +7,17 @@ import {IVersionable} from "./IVersionable.sol";
 /**
  * @title ITTUFeeCollector
  * @author Jack Xu @ EthSign
- * @dev TTUFeeCollector handles service fee calculation.
+ * @dev This contract handles TokenTable service fee calculation.
  */
 interface ITTUFeeCollector is IOwnable, IVersionable {
     event DefaultFeeSet(uint256 bips);
     event CustomFeeSet(address unlockerAddress, uint256 bips);
 
     /**
-     * @notice Returns the amount of tokens deducted as fees.
+     * @notice Returns the amount of fees to collect.
+     * @param unlockerAddress The address of the Unlocker. Used to fetch pricing.
+     * @param tokenTransferred The number of tokens transferred.
+     * @return tokensCollected The number of tokens to collect as fees.
      */
     function getFee(
         address unlockerAddress,

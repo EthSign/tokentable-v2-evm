@@ -20,7 +20,7 @@ import {ITokenTableUnlockerV2} from "../interfaces/ITokenTableUnlockerV2.sol";
  */
 contract TTFutureTokenV2 is ITTFutureTokenV2, ERC721AQueryableUpgradeable {
     address public authorizedMinter;
-    bool public allowTransfer;
+    bool public isTransferable;
 
     // v2.0.1
     string public baseUri;
@@ -36,13 +36,13 @@ contract TTFutureTokenV2 is ITTFutureTokenV2, ERC721AQueryableUpgradeable {
     // solhint-disable-next-line ordering
     function initialize(
         address projectToken,
-        bool allowTransfer_
+        bool isTransferable_
     ) external override initializerERC721A {
         __ERC721A_init_unchained(
             string.concat("Future ", IERC20Metadata(projectToken).name()),
             string.concat("FT-", IERC20Metadata(projectToken).symbol())
         );
-        allowTransfer = allowTransfer_;
+        isTransferable = isTransferable_;
     }
 
     /**
@@ -78,7 +78,7 @@ contract TTFutureTokenV2 is ITTFutureTokenV2, ERC721AQueryableUpgradeable {
         address to,
         uint256 tokenId
     ) public payable virtual override(ERC721AUpgradeable, IERC721AUpgradeable) {
-        if (!allowTransfer) revert NotPermissioned();
+        if (!isTransferable) revert NotPermissioned();
         super.transferFrom(from, to, tokenId);
     }
 
@@ -91,7 +91,7 @@ contract TTFutureTokenV2 is ITTFutureTokenV2, ERC721AQueryableUpgradeable {
         uint256 tokenId,
         bytes memory _data
     ) public payable virtual override(ERC721AUpgradeable, IERC721AUpgradeable) {
-        if (!allowTransfer) revert NotPermissioned();
+        if (!isTransferable) revert NotPermissioned();
         super.safeTransferFrom(from, to, tokenId, _data);
     }
 
@@ -100,8 +100,8 @@ contract TTFutureTokenV2 is ITTFutureTokenV2, ERC721AQueryableUpgradeable {
             _msgSenderERC721A() !=
             ITokenTableUnlockerV2(authorizedMinter).owner()
         ) revert NotPermissioned();
-        emit DidSetBaseURI(baseUri, uri);
         baseUri = uri;
+        emit DidSetBaseURI(uri);
     }
 
     /**

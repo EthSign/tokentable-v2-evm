@@ -4,6 +4,7 @@ artifacts-zk
 cache
 cache-zk
 contracts/old
+docs
 
 # TypeChain
 typechain-types

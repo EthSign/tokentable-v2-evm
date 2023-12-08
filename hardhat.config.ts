@@ -7,6 +7,7 @@ import '@matterlabs/hardhat-zksync-deploy'
 import '@matterlabs/hardhat-zksync-solc'
 import '@matterlabs/hardhat-zksync-verify'
 import '@openzeppelin/hardhat-upgrades'
+import 'solidity-docgen'
 
 if (process.env.NODE_ENV !== 'PRODUCTION') {
     config()
@@ -154,7 +155,7 @@ export default {
         ]
     },
     zksolc: {
-        version: '1.3.17',
+        version: '1.3.18',
         settings: {
             optimizer: {
                 enabled: true,
@@ -221,5 +222,9 @@ export default {
                 }
             }
         ]
+    },
+    docgen: {
+        pages: 'files',
+        exclude: ['libraries', 'mock']
     }
 }

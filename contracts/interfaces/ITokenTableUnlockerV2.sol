@@ -4,12 +4,14 @@ pragma solidity ^0.8.20;
 import {IOwnable} from "./IOwnable.sol";
 import {IVersionable} from "./IVersionable.sol";
 import {Preset, Actual} from "./TokenTableUnlockerV2DataModels.sol";
+import {ITTHook} from "./ITTHook.sol";
+import {ITTUDeployer} from "./ITTUDeployer.sol";
+import {ITTFutureTokenV2} from "./ITTFutureTokenV2.sol";
 
 /**
  * @title ITokenTableUnlockerV2
  * @author Jack Xu @ EthSign
- * @dev The lightweight interface for TokenTableUnlockerV2, which handles token
- * unlocking and distribution for TokenTable. Version 2.5.x
+ * @dev The lightweight interface for TokenTableUnlockerV2(.5.x), which handles token unlocking and distribution for TokenTable.
  */
 abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
     event PresetCreated(bytes32 presetId, uint256 batchId);
@@ -32,14 +34,35 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
     event HookDisabled();
     event WithdrawDisabled();
 
-    error InvalidPresetFormat(); // 0x0ef8e8dc
-    error PresetExists(); // 0x7cbb15b4
-    error PresetDoesNotExist(); // 0xbd88ff7b
-    error InvalidSkipAmount(); // 0x78c0fc43
-    error NotPermissioned(); // 0x7f63bd0f
+    /**
+     * @dev 0x0ef8e8dc
+     */
+    error InvalidPresetFormat();
+    /**
+     * @dev 0x7cbb15b4
+     */
+    error PresetExists();
+    /**
+     * @dev 0xbd88ff7b
+     */
+    error PresetDoesNotExist();
+    /**
+     * @dev 0x78c0fc43
+     */
+    error InvalidSkipAmount();
+    /**
+     * @dev 0x7f63bd0f
+     */
+    error NotPermissioned();
 
     /**
-     * @dev Exposing the initializer.
+     * @dev This contract should be deployed with `TTUDeployerLite`, which calls this function with the correct parameters.
+     * @param projectToken The address of the token that the founder intends to unlock and distribute.
+     * @param futureToken_ The address of the associated FutureToken.
+     * @param deployer_ The address of the deployer. It helps call the fee collector during claim.
+     * @param isCancelable_ If the founder is allowed to cancel schedules. Can be disabled later, but cannot be enabled again.
+     * @param isHookable_ If the founder is allowed to attach external hooks to function calls. Can be disabled later, but cannot be enabled again.
+     * @param isWithdrawable_ If the founder is allowed to withdraw deposited tokens. Can be disabled later, but cannot be enabled again.
      */
     function initialize(
         address projectToken,
@@ -53,6 +76,9 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
     /**
      * @notice Creates an unlocking schedule preset template.
      * @dev Emits `PresetCreated`. Only callable by the owner.
+     * @param presetIds These IDs can be the hashes of a plaintext preset names but really there is no restriction. Will revert if they already exist.
+     * @param presets An array of `Preset` structs.
+     * @param batchId Emitted as an event reserved for EthSign frontend use. This parameter has no effect on contract execution.
      */
     function createPresets(
         bytes32[] calldata presetIds,
@@ -62,8 +88,10 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
 
     /**
      * @notice Creates an actual unlocking schedule based on a preset.
-     * @dev Emits `ActualCreated` A FutureToken is minted in the process w/
-     * `tokenId == actualId`. `batchId` is emitted for the frontend.
+     * @dev Emits `ActualCreated`. A FutureToken is minted in the process with `tokenId == actualId`.
+     * @param recipients An array of token recipients for the schedules. Note that claiming eligibility can be modified by transfering the corresponding FutureToken.
+     * @param actuals An array of `Actual` structs.
+     * @param batchId Emitted as an event reserved for EthSign frontend use. This parameter has no effect on contract execution.
      */
     function createActuals(
         address[] calldata recipients,
@@ -74,18 +102,16 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
     /**
      * @notice Withdraws existing deposit from the contract.
      * @dev Emits `TokensWithdrawn`. Only callable by the owner.
+     * @param amount Amount of deposited funds the founder wishes to withdraw.
      */
     function withdrawDeposit(uint256 amount) external virtual;
 
     /**
-     * @notice Claims claimable tokens for the specified actualId.
+     * @notice Claims claimable tokens for the specified schedules to the specified addresses respectively.
      * @dev Emits `TokensClaimed`. Only callable by the FutureToken owner.
-     * @param actualIds The IDs of the actual unlocking schedule that we are
-     * intending to claim from.
-     * @param claimTos If we want to send the claimed tokens to an
-     * address other than the owner of the FutureToken. If we want to send the
-     * claimed tokens to the owner of the FutureToken (default behavior), pass
-     * in `ethers.constants.AddressZero`.
+     * @param actualIds The IDs of the unlocking schedules that we are trying to claim from.
+     * @param claimTos If we want to send the claimed tokens to an address other than the caller. To send the claimed tokens to the caller (default behavior), pass in `ethers.constants.AddressZero`.
+     * @param batchId Emitted as an event reserved for EthSign frontend use. This parameter has no effect on contract execution.
      */
     function claim(
         uint256[] calldata actualIds,
@@ -94,13 +120,11 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
     ) external virtual;
 
     /**
-     * @notice Cancels an actual unlocking schedule effective immediately.
-     * Tokens not yet claimed but already unlocked will be tallied.
+     * @notice Cancels an array of unlocking schedules effective immediately. Tokens not yet claimed but are already unlocked will be tallied.
      * @dev Emits `ActualCancelled`. Only callable by the owner.
-     * @param actualIds The ID of the actual unlocking schedule that we want
-     * to cancel.
-     * @return pendingAmountClaimables Number of tokens eligible to be claimed
-     * by the affected stakeholders at the moment of cancellation.
+     * @param actualIds The ID of the actual unlocking schedule that we want to cancel.
+     * @param batchId Emitted as an event reserved for EthSign frontend use. This parameter has no effect on contract execution.
+     * @return pendingAmountClaimables Number of tokens eligible to be claimed by the affected stakeholders at the moment of cancellation.
      */
     function cancel(
         uint256[] calldata actualIds,
@@ -110,11 +134,12 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
     /**
      * @notice Sets the hook contract.
      * @dev Only callable by the owner.
+     * @param hook The address of the `ITTHook` hook contract.
      */
-    function setHook(address hook) external virtual;
+    function setHook(ITTHook hook) external virtual;
 
     /**
-     * @notice Permanently disables the cancel() function.
+     * @notice Permanently disables the `cancel()` function.
      * @dev Only callable by the owner.
      */
     function disableCancel() external virtual;
@@ -126,50 +151,75 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
     function disableHook() external virtual;
 
     /**
-     * @notice Permanently disables the owner from withdrawing deposits.
+     * @notice Permanently prevents the founder from withdrawing deposits.
      * @dev Only callable by the owner.
      */
     function disableWithdraw() external virtual;
 
     /**
-     * @dev Exposes the public variable.
+     * @return The deployer instance associated with this Unlocker.
+     */
+    function deployer() external view virtual returns (ITTUDeployer);
+
+    /**
+     * @return The FutureToken instance associated with this Unlocker.
+     */
+    function futureToken() external view virtual returns (ITTFutureTokenV2);
+
+    /**
+     * @return The external hook associated with this Unlocker.
+     */
+    function hook() external view virtual returns (ITTHook);
+
+    /**
+     * @return If the founder is allowed to cancel schedules.
      */
     function isCancelable() external view virtual returns (bool);
 
     /**
-     * @dev Exposes the public variable.
+     * @return If the founder can attach external hooks to function calls.
      */
     function isHookable() external view virtual returns (bool);
 
     /**
-     * @dev Exposes the public variable.
+     * @return If the founder can withdraw deposited but unclaimed tokens.
      */
     function isWithdrawable() external view virtual returns (bool);
 
     /**
-     * @notice Returns an ABI-encoded preset, as nested objects cannot be
-     * returned directly in Solidity.
-     * @dev To decode in JS, use:
+     * @param actualId The canceled schedule ID.
+     * @return The amount of tokens from canceled schedules that have been unlocked but unclaimed by the stakeholder.
+     */
+    function pendingAmountClaimableForCancelledActuals(
+        uint256 actualId
+    ) external view virtual returns (uint256);
+
+    /**
+     * @notice To decode in JS, use:
+     * ```js
      *  ethers.utils.defaultAbiCoder.decode(
      *      ['uint256[]', 'uint256', 'uint256[]', 'uint256[]', 'bool'],
      *      encodedPreset
      *  )
+     * ```
      * @param presetId The ID of the preset we are trying to read.
+     * @return An ABI-encoded `Preset`, as nested objects cannot be returned directly in Solidity.
      */
     function getEncodedPreset(
         bytes32 presetId
     ) external view virtual returns (bytes memory);
 
     /**
-     * @notice Calculates the amount of unlocked tokens that have yet to be
-     * claimed in an actual unlocking schedule.
-     * @dev This is the most complex part of the smart contract. Quite a bit of
-     * calculations are performed here.
-     * @param actualId The ID of the actual unlocking schedule that we are
-     * working with.
+     * @return The basis point precision of this Unlocker.
+     */
+    function BIPS_PRECISION() external pure virtual returns (uint256);
+
+    /**
+     * @notice Calculates the amount of unlocked tokens that have yet to be claimed in an actual unlocking schedule.
+     * @dev This is the most complex part of the smart contract. Quite a bit of calculations are performed here.
+     * @param actualId The ID of the actual unlocking schedule that we are working with.
      * @return deltaAmountClaimable Amount of tokens claimable right now.
-     * @return updatedAmountClaimed New total amount of tokens claimed. This is
-     * the sum of all previously claimed tokens and deltaAmountClaimable.
+     * @return updatedAmountClaimed New total amount of tokens claimed. This is the sum of all previously claimed tokens and `deltaAmountClaimable`.
      */
     function calculateAmountClaimable(
         uint256 actualId
