@@ -25,6 +25,7 @@ contract TokenTableUnlockerV2 is
     ITTUDeployer public override deployer;
     ITTFutureTokenV2 public override futureToken;
     ITTHook public override hook;
+    address public override claimingDelegate;
     bool public override isCancelable;
     bool public override isHookable;
     bool public override isWithdrawable;
@@ -54,6 +55,7 @@ contract TokenTableUnlockerV2 is
         futureToken = ITTFutureTokenV2(futureToken_);
         deployer = ITTUDeployer(deployer_);
         __ReentrancyGuard_init_unchained();
+        claimingDelegate = owner();
         isCancelable = isCancelable_;
         isHookable = isHookable_;
         isWithdrawable = isWithdrawable_;
@@ -105,6 +107,17 @@ contract TokenTableUnlockerV2 is
         _callHook(TokenTableUnlockerV2.claim.selector, msg.data);
     }
 
+    function delegateClaim(
+        uint256[] calldata actualIds,
+        uint256 batchId
+    ) external virtual override nonReentrant {
+        if (_msgSender() != claimingDelegate) revert NotPermissioned();
+        for (uint256 i = 0; i < actualIds.length; i++) {
+            _claim(actualIds[i], address(0), batchId);
+        }
+        _callHook(TokenTableUnlockerV2.delegateClaim.selector, msg.data);
+    }
+
     function cancel(
         uint256[] calldata actualIds,
         bool[] calldata shouldWipeClaimableBalance,
@@ -146,6 +159,13 @@ contract TokenTableUnlockerV2 is
         _callHook(TokenTableUnlockerV2.setHook.selector, msg.data);
     }
 
+    function setClaimingDelegate(
+        address delegate
+    ) external virtual override onlyOwner {
+        claimingDelegate = delegate;
+        emit ClaimingDelegateSet(delegate);
+    }
+
     function disableCancel() external virtual override onlyOwner {
         isCancelable = false;
         emit CancelDisabled();
@@ -169,6 +189,8 @@ contract TokenTableUnlockerV2 is
         address newOwner
     ) public override(IOwnable, OwnableUpgradeable) {
         OwnableUpgradeable.transferOwnership(newOwner);
+        claimingDelegate = newOwner;
+        emit ClaimingDelegateSet(newOwner);
     }
 
     function renounceOwnership() public override(IOwnable, OwnableUpgradeable) {

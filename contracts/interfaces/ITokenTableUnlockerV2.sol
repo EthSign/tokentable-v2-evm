@@ -31,6 +31,7 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
         uint256 batchId
     );
     event TokensWithdrawn(address by, uint256 amount);
+    event ClaimingDelegateSet(address delegate);
     event CancelDisabled();
     event HookDisabled();
     event WithdrawDisabled();
@@ -121,6 +122,17 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
     ) external virtual;
 
     /**
+     * @notice Claims claimable tokens for the specified schedules on behalf of recipients. Claimed tokens are sent to the schedule recipients.
+     * @dev Emits `TokensClaimed`. Only callable by the owner or claiming delegate.
+     * @param actualIds The IDs of the unlocking schedules that we are trying to claim from on behalf of the recipients.
+     * @param batchId Emitted as an event reserved for EthSign frontend use. This parameter has no effect on contract execution.
+     */
+    function delegateClaim(
+        uint256[] calldata actualIds,
+        uint256 batchId
+    ) external virtual;
+
+    /**
      * @notice Cancels an array of unlocking schedules effective immediately. Tokens not yet claimed but are already unlocked will be tallied.
      * @dev Emits `ActualCancelled`. Only callable by the owner.
      * @param actualIds The ID of the actual unlocking schedule that we want to cancel.
@@ -140,6 +152,12 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
      * @param hook The address of the `ITTHook` hook contract.
      */
     function setHook(ITTHook hook) external virtual;
+
+    /**
+     * @notice Sets the claiming delegate who can trigger claims on behalf of recipients.
+     * @dev Only callable by the owner.
+     */
+    function setClaimingDelegate(address delegate) external virtual;
 
     /**
      * @notice Permanently disables the `cancel()` function.
@@ -173,6 +191,11 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
      * @return The external hook associated with this Unlocker.
      */
     function hook() external view virtual returns (ITTHook);
+
+    /**
+     * @return The claiming delegate who can trigger claims on behalf of schedule recipients.
+     */
+    function claimingDelegate() external view virtual returns (address);
 
     /**
      * @return If the founder is allowed to cancel schedules.
