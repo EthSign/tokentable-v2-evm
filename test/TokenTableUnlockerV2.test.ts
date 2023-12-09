@@ -661,7 +661,7 @@ describe('V2', () => {
                 )[0]
                 // Should revert when calling without permission
                 await expect(
-                    unlocker.connect(investor).cancel([actualId], 0)
+                    unlocker.connect(investor).cancel([actualId], [false], 0)
                 ).to.be.revertedWithCustomError(
                     unlocker,
                     'OwnableUnauthorizedAccount'
@@ -703,10 +703,10 @@ describe('V2', () => {
                     ) - amountSentToInvestor
                 const cancelTx = await unlocker
                     .connect(founder)
-                    .cancel([actualId], 0)
+                    .cancel([actualId], [false], 0)
                 await expect(cancelTx)
                     .to.emit(unlocker, 'ActualCancelled')
-                    .withArgs(actualId, amountShouldSendToInvestor, 0)
+                    .withArgs(actualId, amountShouldSendToInvestor, false, 0)
             })
 
             /**

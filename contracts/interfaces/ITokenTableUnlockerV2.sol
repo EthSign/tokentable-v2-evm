@@ -19,6 +19,7 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
     event ActualCancelled(
         uint256 actualId,
         uint256 pendingAmountClaimable,
+        bool didWipeClaimableBalance,
         uint256 batchId
     );
     event TokensClaimed(
@@ -123,11 +124,13 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
      * @notice Cancels an array of unlocking schedules effective immediately. Tokens not yet claimed but are already unlocked will be tallied.
      * @dev Emits `ActualCancelled`. Only callable by the owner.
      * @param actualIds The ID of the actual unlocking schedule that we want to cancel.
+     * @param shouldWipeClaimableBalance If the unlocked and claimable balance of the canceled schedule should be wiped. This is usually used to delete an erroneously created schedule that has already started unlocking.
      * @param batchId Emitted as an event reserved for EthSign frontend use. This parameter has no effect on contract execution.
      * @return pendingAmountClaimables Number of tokens eligible to be claimed by the affected stakeholders at the moment of cancellation.
      */
     function cancel(
         uint256[] calldata actualIds,
+        bool[] calldata shouldWipeClaimableBalance,
         uint256 batchId
     ) external virtual returns (uint256[] memory pendingAmountClaimables);
 

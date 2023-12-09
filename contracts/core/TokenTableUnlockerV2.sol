@@ -107,6 +107,7 @@ contract TokenTableUnlockerV2 is
 
     function cancel(
         uint256[] calldata actualIds,
+        bool[] calldata shouldWipeClaimableBalance,
         uint256 batchId
     )
         external
@@ -122,11 +123,18 @@ contract TokenTableUnlockerV2 is
             (uint256 deltaAmountClaimable, ) = calculateAmountClaimable(
                 actualId
             );
-            pendingAmountClaimableForCancelledActuals[
-                actualId
-            ] += deltaAmountClaimable;
+            if (!shouldWipeClaimableBalance[i]) {
+                pendingAmountClaimableForCancelledActuals[
+                    actualId
+                ] += deltaAmountClaimable;
+            }
             pendingAmountClaimables[i] = deltaAmountClaimable;
-            emit ActualCancelled(actualId, deltaAmountClaimable, batchId);
+            emit ActualCancelled(
+                actualId,
+                deltaAmountClaimable,
+                shouldWipeClaimableBalance[i],
+                batchId
+            );
             delete actuals[actualId];
         }
         _callHook(TokenTableUnlockerV2.cancel.selector, msg.data);
