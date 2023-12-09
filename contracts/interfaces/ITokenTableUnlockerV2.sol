@@ -123,7 +123,7 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
 
     /**
      * @notice Claims claimable tokens for the specified schedules on behalf of recipients. Claimed tokens are sent to the schedule recipients.
-     * @dev Emits `TokensClaimed`. Only callable by the owner or claiming delegate.
+     * @dev Emits `TokensClaimed`. Only callable by the claiming delegate.
      * @param actualIds The IDs of the unlocking schedules that we are trying to claim from on behalf of the recipients.
      * @param batchId Emitted as an event reserved for EthSign frontend use. This parameter has no effect on contract execution.
      */
