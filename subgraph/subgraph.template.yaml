@@ -44,28 +44,37 @@ templates:
         - OwnershipTransferred
         - PresetCreated
         - TokensClaimed
-        - TokensDeposited
         - TokensWithdrawn
+        - ClaimingDelegateSet
+        - CancelDisabled
+        - HookDisabled
+        - WithdrawDisabled
       abis:
         - name: TokenTableUnlockerV2
           file: ../artifacts/contracts/core/TokenTableUnlockerV2.sol/TokenTableUnlockerV2.json
       eventHandlers:
-        - event: ActualCancelled(uint256,uint256,uint256,address)
+        - event: ActualCancelled(uint256,uint256,bool,uint256)
           handler: handleActualCancelled
         - event: ActualCreated(bytes32,uint256,uint256)
           handler: handleActualCreated
-        - event: Initialized(uint8)
+        - event: Initialized(uint64)
           handler: handleInitialized
         - event: OwnershipTransferred(indexed address,indexed address)
           handler: handleOwnershipTransferred
-        - event: PresetCreated(bytes32)
+        - event: PresetCreated(bytes32,uint256)
           handler: handlePresetCreated
-        - event: TokensClaimed(uint256,address,address,uint256)
+        - event: TokensClaimed(uint256,address,address,uint256,uint256,uint256)
           handler: handleTokensClaimed
-        - event: TokensDeposited(uint256,uint256)
-          handler: handleTokensDeposited
-        - event: TokensWithdrawn(uint256,address,uint256)
+        - event: TokensWithdrawn(address,uint256)
           handler: handleTokensWithdrawn
+        - event: ClaimingDelegateSet(address)
+          handler: handleClaimingDelegateSet
+        - event: CancelDisabled()
+          handler: handleCancelDisabled
+        - event: HookDisabled()
+          handler: handleHookDisabled
+        - event: WithdrawDisabled()
+          handler: handleWithdrawDisabled
       file: ./src/token-table-unlocker-v-2.ts
   - kind: ethereum
     name: TTFutureTokenV2

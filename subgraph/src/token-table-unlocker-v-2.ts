@@ -6,8 +6,11 @@ import {
     OwnershipTransferred as OwnershipTransferredEvent,
     PresetCreated as PresetCreatedEvent,
     TokensClaimed as TokensClaimedEvent,
-    TokensDeposited as TokensDepositedEvent,
-    TokensWithdrawn as TokensWithdrawnEvent
+    TokensWithdrawn as TokensWithdrawnEvent,
+    ClaimingDelegateSet as ClaimingDelegateSetEvent,
+    CancelDisabled as CancelDisabledEvent,
+    HookDisabled as HookDisabledEvent,
+    WithdrawDisabled as WithdrawDisabledEvent
 } from '../generated/templates/TokenTableUnlockerV2/TokenTableUnlockerV2'
 import {Initialized, OwnershipTransferred, TTEvent} from '../generated/schema'
 
@@ -19,9 +22,9 @@ export function handleActualCancelled(event: ActualCancelledEvent): void {
     entity.from = event.transaction.from
     entity.timestamp = event.block.timestamp
     entity.actualId = event.params.actualId
-    entity.amountUnlockedLeftover = event.params.amountUnlockedLeftover
-    entity.amountRefunded = event.params.amountRefunded
-    entity.someAddress = event.params.refundFounderAddress
+    entity.pendingAmountClaimable = event.params.pendingAmountClaimable
+    entity.didWipeClaimableBalance = event.params.didWipeClaimableBalance
+    entity.batchId = event.params.batchId
 
     const context = dataSource.context()
     entity.projectId = context.getString('projectId')
@@ -38,7 +41,7 @@ export function handleActualCreated(event: ActualCreatedEvent): void {
     entity.timestamp = event.block.timestamp
     entity.presetId = event.params.presetId
     entity.actualId = event.params.actualId
-    entity.someNumber = event.params.batchId
+    entity.batchId = event.params.batchId
 
     const context = dataSource.context()
     entity.projectId = context.getString('projectId')
@@ -96,25 +99,10 @@ export function handleTokensClaimed(event: TokensClaimedEvent): void {
     entity.from = event.transaction.from
     entity.timestamp = event.block.timestamp
     entity.actualId = event.params.actualId
-    entity.someAddress = event.params.to
-    entity.someBytes = event.params.caller
+    entity.to = event.params.to
+    entity.caller = event.params.caller
     entity.amount = event.params.amount
-
-    const context = dataSource.context()
-    entity.projectId = context.getString('projectId')
-
-    entity.save()
-}
-
-export function handleTokensDeposited(event: TokensDepositedEvent): void {
-    let entity = new TTEvent(
-        event.transaction.hash.concatI32(event.logIndex.toI32())
-    )
-    entity.event = 'TokensDeposited'
-    entity.from = event.transaction.from
-    entity.timestamp = event.block.timestamp
-    entity.actualId = event.params.actualId
-    entity.amount = event.params.amount
+    entity.feesCharged = event.params.feesCharged
 
     const context = dataSource.context()
     entity.projectId = context.getString('projectId')
@@ -129,9 +117,67 @@ export function handleTokensWithdrawn(event: TokensWithdrawnEvent): void {
     entity.event = 'TokensWithdrawn'
     entity.from = event.transaction.from
     entity.timestamp = event.block.timestamp
-    entity.actualId = event.params.actualId
-    entity.someAddress = event.params.by
+    entity.by = event.params.by
     entity.amount = event.params.amount
+
+    const context = dataSource.context()
+    entity.projectId = context.getString('projectId')
+
+    entity.save()
+}
+
+export function handleClaimingDelegateSet(
+    event: ClaimingDelegateSetEvent
+): void {
+    let entity = new TTEvent(
+        event.transaction.hash.concatI32(event.logIndex.toI32())
+    )
+    entity.event = 'ClaimingDelegateSet'
+    entity.from = event.transaction.from
+    entity.timestamp = event.block.timestamp
+    entity.delegate = event.params.delegate
+
+    const context = dataSource.context()
+    entity.projectId = context.getString('projectId')
+
+    entity.save()
+}
+
+export function handleCancelDisabled(event: CancelDisabledEvent): void {
+    let entity = new TTEvent(
+        event.transaction.hash.concatI32(event.logIndex.toI32())
+    )
+    entity.event = 'CancelDisabled'
+    entity.from = event.transaction.from
+    entity.timestamp = event.block.timestamp
+
+    const context = dataSource.context()
+    entity.projectId = context.getString('projectId')
+
+    entity.save()
+}
+
+export function handleHookDisabled(event: HookDisabledEvent): void {
+    let entity = new TTEvent(
+        event.transaction.hash.concatI32(event.logIndex.toI32())
+    )
+    entity.event = 'HookDisabled'
+    entity.from = event.transaction.from
+    entity.timestamp = event.block.timestamp
+
+    const context = dataSource.context()
+    entity.projectId = context.getString('projectId')
+
+    entity.save()
+}
+
+export function handleWithdrawDisabled(event: WithdrawDisabledEvent): void {
+    let entity = new TTEvent(
+        event.transaction.hash.concatI32(event.logIndex.toI32())
+    )
+    entity.event = 'WithdrawDisabled'
+    entity.from = event.transaction.from
+    entity.timestamp = event.block.timestamp
 
     const context = dataSource.context()
     entity.projectId = context.getString('projectId')

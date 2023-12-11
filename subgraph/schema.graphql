@@ -16,8 +16,11 @@ enum TTEventType {
   ActualCreated
   PresetCreated
   TokensClaimed
-  TokensDeposited
   TokensWithdrawn
+  ClaimingDelegateSet
+  CancelDisabled
+  HookDisabled
+  WithdrawDisabled
   FutureTokenTransferred
 }
 
@@ -29,18 +32,20 @@ type TTEvent @entity(immutable: true) {
   projectId: String!
   presetId: Bytes
   actualId: BigInt
-  someAddress: Bytes
-  someBytes: Bytes
-  someNumber: BigInt
+  caller: Bytes
+  by: Bytes
+  to: Bytes
+  delegate: Bytes
+  didWipeClaimableBalance: Boolean
   amount: BigInt
-  amountUnlockedLeftover: BigInt
-  amountRefunded: BigInt
-  bool: Boolean
+  feesCharged: BigInt
+  pendingAmountClaimable: BigInt
+  batchId: BigInt
 }
 
 type Initialized @entity(immutable: true) {
   id: Bytes!
-  version: Int! # uint8
+  version: BigInt!
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

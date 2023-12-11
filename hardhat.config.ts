@@ -89,7 +89,7 @@ export default {
             saveDeployments: true,
             zksync: false
         },
-        polygonMumbai: {
+        mumbai: {
             url: 'https://rpc.ankr.com/polygon_mumbai',
             chainId: 80001,
             loggingEnabled: true,
