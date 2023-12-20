@@ -74,15 +74,27 @@ const calculateAmountOfTokensToClaimAtTimestamp = (
     )
 }
 
+// const result = calculateAmountOfTokensToClaimAtTimestamp(
+//     0n,
+//     10000n,
+//     [0n, 10000n],
+//     999n,
+//     [10000n, 0n],
+//     [10n, 1n],
+//     10000n,
+//     10000n,
+//     false
+// )
+
 const result = calculateAmountOfTokensToClaimAtTimestamp(
-    0n,
-    10000n,
-    [0n, 10000n],
-    999n,
+    1705160360n,
+    18144000n,
+    [0n, 18144000n],
+    1718120360n,
     [10000n, 0n],
-    [10n, 1n],
+    [7n, 1n],
     10000n,
-    10000n,
+    100n,
     false
 )
 

@@ -254,4 +254,21 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
         view
         virtual
         returns (uint256 deltaAmountClaimable, uint256 updatedAmountClaimed);
+
+    /**
+     * @notice Simulates the amount of unlocked tokens that have yet to be claimed at a specific time in an actual unlocking schedule.
+     * @dev This is the most complex part of the smart contract. Quite a bit of calculations are performed here.
+     * @param actualId The ID of the actual unlocking schedule that we are working with.
+     * @param claimTimestampAbsolute The simulated time of claim.
+     * @return deltaAmountClaimable Amount of tokens claimable right now.
+     * @return updatedAmountClaimed New total amount of tokens claimed. This is the sum of all previously claimed tokens and `deltaAmountClaimable`.
+     */
+    function simulateAmountClaimable(
+        uint256 actualId,
+        uint256 claimTimestampAbsolute
+    )
+        public
+        view
+        virtual
+        returns (uint256 deltaAmountClaimable, uint256 updatedAmountClaimed);
 }

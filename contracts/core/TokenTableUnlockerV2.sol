@@ -302,15 +302,31 @@ contract TokenTableUnlockerV2 is
         override
         returns (uint256 deltaAmountClaimable, uint256 updatedAmountClaimed)
     {
+        (deltaAmountClaimable, updatedAmountClaimed) = simulateAmountClaimable(
+            actualId,
+            block.timestamp
+        );
+    }
+
+    function simulateAmountClaimable(
+        uint256 actualId,
+        uint256 claimTimestampAbsolute
+    )
+        public
+        view
+        virtual
+        override
+        returns (uint256 deltaAmountClaimable, uint256 updatedAmountClaimed)
+    {
         uint256 tokenPrecisionDecimals = 10 ** 5;
         Actual memory actual = actuals[actualId];
         Preset memory preset = _presets[actual.presetId];
         uint256 timePrecisionDecimals = preset.stream ? 10 ** 5 : 1;
         uint256 i;
         uint256 latestIncompleteLinearIndex;
-        if (block.timestamp < actual.startTimestampAbsolute)
+        if (claimTimestampAbsolute < actual.startTimestampAbsolute)
             return (0, actual.amountClaimed);
-        uint256 claimTimestampRelative = block.timestamp -
+        uint256 claimTimestampRelative = claimTimestampAbsolute -
             actual.startTimestampAbsolute;
         for (i = 0; i < preset.linearStartTimestampsRelative.length; i++) {
             if (

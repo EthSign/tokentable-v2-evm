@@ -139,6 +139,13 @@ export default {
             accounts: [process.env.PRIVATE_KEY],
             saveDeployments: true,
             zksync: false
+        },
+        berachainTestnet: {
+            chainId: 2061,
+            url: 'https://rpc.berachain-internal.com/',
+            accounts: [process.env.PRIVATE_KEY],
+            saveDeployments: true,
+            zksync: false
         }
     },
     solidity: {
