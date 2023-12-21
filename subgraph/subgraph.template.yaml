@@ -55,7 +55,7 @@ templates:
       eventHandlers:
         - event: ActualCancelled(uint256,uint256,bool,uint256)
           handler: handleActualCancelled
-        - event: ActualCreated(bytes32,uint256,uint256)
+        - event: ActualCreated(bytes32,uint256,address,uint256)
           handler: handleActualCreated
         - event: Initialized(uint64)
           handler: handleInitialized

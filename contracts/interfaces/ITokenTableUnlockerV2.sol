@@ -15,7 +15,12 @@ import {ITTFutureTokenV2} from "./ITTFutureTokenV2.sol";
  */
 abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
     event PresetCreated(bytes32 presetId, uint256 batchId);
-    event ActualCreated(bytes32 presetId, uint256 actualId, uint256 batchId);
+    event ActualCreated(
+        bytes32 presetId,
+        uint256 actualId,
+        address recipient,
+        uint256 batchId
+    );
     event ActualCancelled(
         uint256 actualId,
         uint256 pendingAmountClaimable,

@@ -228,7 +228,7 @@ contract TokenTableUnlockerV2 is
         if (actual.amountClaimed >= actual.totalAmount)
             revert InvalidSkipAmount();
         actuals[actualId] = actual;
-        emit ActualCreated(actual.presetId, actualId, batchId);
+        emit ActualCreated(actual.presetId, actualId, recipient, batchId);
     }
 
     function _claim(
@@ -290,7 +290,7 @@ contract TokenTableUnlockerV2 is
     }
 
     function version() external pure returns (string memory) {
-        return "2.5.0";
+        return "2.5.1";
     }
 
     function calculateAmountClaimable(
