@@ -218,6 +218,7 @@ describe('V2', () => {
                                 totalAmount
                             }
                         ],
+                        [0],
                         0
                     )
                 ).to.be.revertedWithCustomError(
@@ -235,6 +236,7 @@ describe('V2', () => {
                                 totalAmount
                             }
                         ],
+                        [0],
                         0
                     )
                 ).to.be.revertedWithCustomError(unlocker, 'InvalidPresetFormat')
@@ -249,6 +251,7 @@ describe('V2', () => {
                                 totalAmount
                             }
                         ],
+                        [0],
                         0
                     )
                 ).to.be.revertedWithCustomError(unlocker, 'InvalidSkipAmount')
@@ -264,6 +267,7 @@ describe('V2', () => {
                                 totalAmount
                             }
                         ],
+                        [0],
                         0
                     )
                 const actualId = (
@@ -271,7 +275,7 @@ describe('V2', () => {
                 )[0]
                 await expect(createActualTx)
                     .to.emit(unlocker, 'ActualCreated')
-                    .withArgs(presetId, actualId, 0)
+                    .withArgs(presetId, actualId, investor.address, 0, 0)
             })
 
             it('should let founder withdraw deposit and enforce permissions', async () => {
@@ -288,6 +292,7 @@ describe('V2', () => {
                             totalAmount
                         }
                     ],
+                    [0],
                     0
                 )
                 await projectToken
@@ -383,6 +388,7 @@ describe('V2', () => {
                                     totalAmount
                                 }
                             ],
+                            [0],
                             0
                         )
                         actualId = (
@@ -427,6 +433,7 @@ describe('V2', () => {
                                     totalAmount
                                 }
                             ],
+                            [0],
                             0
                         )
                         actualId = (
@@ -469,6 +476,7 @@ describe('V2', () => {
                             totalAmount
                         }
                     ],
+                    [0],
                     0
                 )
                 const actualId = (
@@ -651,6 +659,7 @@ describe('V2', () => {
                             totalAmount
                         }
                     ],
+                    [0],
                     0
                 )
                 await projectToken
@@ -773,6 +782,7 @@ describe('V2', () => {
                             totalAmount
                         }
                     ],
+                    [0],
                     0
                 )
                 await unlocker.connect(founder).createActuals(
@@ -785,6 +795,7 @@ describe('V2', () => {
                             totalAmount
                         }
                     ],
+                    [0],
                     0
                 )
                 await projectToken
@@ -924,6 +935,7 @@ describe('V2', () => {
                             totalAmount
                         }
                     ],
+                    [0],
                     0
                 )
                 await unlocker_.connect(founder).createActuals(
@@ -936,6 +948,7 @@ describe('V2', () => {
                             totalAmount
                         }
                     ],
+                    [0],
                     0
                 )
                 const [actualId0, actualId1] = await futureToken_.tokensOfOwner(
@@ -980,6 +993,7 @@ describe('V2', () => {
                                 totalAmount
                             }
                         ],
+                        [0],
                         0
                     )
                 ).to.be.revertedWithoutReason()
@@ -1045,6 +1059,7 @@ describe('V2', () => {
                             totalAmount
                         }
                     ],
+                    [0],
                     0
                 )
                 await unlocker2.connect(founder).createActuals(
@@ -1057,6 +1072,7 @@ describe('V2', () => {
                             totalAmount
                         }
                     ],
+                    [0],
                     0
                 )
                 const [actualId02, actualId12] =
@@ -1101,6 +1117,7 @@ describe('V2', () => {
                             totalAmount
                         }
                     ],
+                    [0],
                     0
                 )
                 await futureToken2.tokensOfOwner(investor.address)
