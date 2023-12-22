@@ -213,7 +213,8 @@ contract TokenTableUnlockerV2 is
         uint256 batchId
     ) internal virtual {
         if (!_presetIsEmpty(_presets[presetId])) revert PresetExists();
-        if (!_presetHasValidFormat(preset)) revert InvalidPresetFormat();
+        if (!_presetHasValidFormat(preset) || presetId == 0)
+            revert InvalidPresetFormat();
         _presets[presetId] = preset;
         emit PresetCreated(presetId, batchId);
     }
@@ -328,6 +329,7 @@ contract TokenTableUnlockerV2 is
     {
         uint256 tokenPrecisionDecimals = 10 ** 5;
         Actual memory actual = actuals[actualId];
+        if (actual.presetId == 0) revert PresetDoesNotExist();
         Preset memory preset = _presets[actual.presetId];
         uint256 timePrecisionDecimals = preset.stream ? 10 ** 5 : 1;
         uint256 i;
