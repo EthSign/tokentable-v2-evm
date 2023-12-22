@@ -43,6 +43,7 @@ export function handleActualCreated(event: ActualCreatedEvent): void {
     entity.actualId = event.params.actualId
     entity.batchId = event.params.batchId
     entity.recipient = event.params.recipient
+    entity.recipientId = event.params.recipientId
 
     const context = dataSource.context()
     entity.projectId = context.getString('projectId')

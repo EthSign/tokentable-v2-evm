@@ -19,6 +19,7 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
         bytes32 presetId,
         uint256 actualId,
         address recipient,
+        uint256 recipientId,
         uint256 batchId
     );
     event ActualCancelled(
@@ -98,11 +99,13 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
      * @dev Emits `ActualCreated`. A FutureToken is minted in the process with `tokenId == actualId`.
      * @param recipients An array of token recipients for the schedules. Note that claiming eligibility can be modified by transfering the corresponding FutureToken.
      * @param actuals An array of `Actual` structs.
+     * @param recipientIds Emitted as an event reserved for EthSign frontend use. This parameter has no effect on contract execution.
      * @param batchId Emitted as an event reserved for EthSign frontend use. This parameter has no effect on contract execution.
      */
     function createActuals(
         address[] calldata recipients,
         Actual[] memory actuals,
+        uint256[] calldata recipientIds,
         uint256 batchId
     ) external virtual;
 

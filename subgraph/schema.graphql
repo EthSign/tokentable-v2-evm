@@ -33,6 +33,7 @@ type TTEvent @entity(immutable: true) {
   presetId: Bytes
   actualId: BigInt
   recipient: Bytes
+  recipientId: BigInt
   caller: Bytes
   by: Bytes
   to: Bytes

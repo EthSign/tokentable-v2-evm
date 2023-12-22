@@ -76,10 +76,11 @@ contract TokenTableUnlockerV2 is
     function createActuals(
         address[] memory recipients,
         Actual[] memory actuals_,
+        uint256[] calldata recipientIds,
         uint256 batchId
     ) external virtual override onlyOwner {
         for (uint256 i = 0; i < recipients.length; i++) {
-            _createActual(recipients[i], actuals_[i], batchId);
+            _createActual(recipients[i], actuals_[i], recipientIds[i], batchId);
         }
         _callHook(this.createActuals.selector, msg.data);
     }
@@ -220,6 +221,7 @@ contract TokenTableUnlockerV2 is
     function _createActual(
         address recipient,
         Actual memory actual,
+        uint256 recipientId,
         uint256 batchId
     ) internal virtual {
         uint256 actualId = futureToken.safeMint(recipient);
@@ -228,7 +230,13 @@ contract TokenTableUnlockerV2 is
         if (actual.amountClaimed >= actual.totalAmount)
             revert InvalidSkipAmount();
         actuals[actualId] = actual;
-        emit ActualCreated(actual.presetId, actualId, recipient, batchId);
+        emit ActualCreated(
+            actual.presetId,
+            actualId,
+            recipient,
+            recipientId,
+            batchId
+        );
     }
 
     function _claim(
@@ -290,7 +298,7 @@ contract TokenTableUnlockerV2 is
     }
 
     function version() external pure returns (string memory) {
-        return "2.5.1";
+        return "2.5.2";
     }
 
     function calculateAmountClaimable(
