@@ -334,8 +334,11 @@ contract TokenTableUnlockerV2 is
         uint256 timePrecisionDecimals = preset.stream ? 10 ** 5 : 1;
         uint256 i;
         uint256 latestIncompleteLinearIndex;
-        if (claimTimestampAbsolute < actual.startTimestampAbsolute)
-            return (0, actual.amountClaimed);
+        if (
+            claimTimestampAbsolute <
+            actual.startTimestampAbsolute +
+                preset.linearStartTimestampsRelative[0]
+        ) return (0, actual.amountClaimed);
         uint256 claimTimestampRelative = claimTimestampAbsolute -
             actual.startTimestampAbsolute;
         for (i = 0; i < preset.linearStartTimestampsRelative.length; i++) {

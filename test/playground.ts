@@ -13,7 +13,10 @@ const calculateAmountOfTokensToClaimAtTimestamp = (
     const timePrecisionDecimals = stream ? 10n ** 5n : 1n
     let claimableBips = 0n
     const claimTimestampRelative =
-        claimTimestampAbsolute - startTimestampAbsolute
+        claimTimestampAbsolute -
+        startTimestampAbsolute -
+        linearStartTimestampsRelative[0]
+    if (claimTimestampRelative < 0) return 0n
     let latestIncompleteLinearIndex = 0
     let k
     for (k = 0; k < linearStartTimestampsRelative.length; k++) {
@@ -74,28 +77,28 @@ const calculateAmountOfTokensToClaimAtTimestamp = (
     )
 }
 
-// const result = calculateAmountOfTokensToClaimAtTimestamp(
-//     0n,
-//     10000n,
-//     [0n, 10000n],
-//     999n,
-//     [10000n, 0n],
-//     [10n, 1n],
-//     10000n,
-//     10000n,
-//     false
-// )
-
 const result = calculateAmountOfTokensToClaimAtTimestamp(
-    1705160360n,
-    18144000n,
-    [0n, 18144000n],
-    1718120360n,
-    [10000n, 0n],
-    [7n, 1n],
+    0n,
     10000n,
-    100n,
+    [5000n, 10000n],
+    999n,
+    [10000n, 0n],
+    [10n, 1n],
+    10000n,
+    10000n,
     false
 )
+
+// const result = calculateAmountOfTokensToClaimAtTimestamp(
+//     1705160360n,
+//     18144000n,
+//     [0n, 18144000n],
+//     1718120360n,
+//     [10000n, 0n],
+//     [7n, 1n],
+//     10000n,
+//     100n,
+//     false
+// )
 
 console.log(result)
