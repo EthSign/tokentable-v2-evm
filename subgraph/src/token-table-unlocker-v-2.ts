@@ -1,4 +1,4 @@
-import {dataSource} from '@graphprotocol/graph-ts'
+import {Bytes, dataSource, store} from '@graphprotocol/graph-ts'
 import {
     ActualCancelled as ActualCancelledEvent,
     ActualCreated as ActualCreatedEvent,
@@ -10,11 +10,20 @@ import {
     ClaimingDelegateSet as ClaimingDelegateSetEvent,
     CancelDisabled as CancelDisabledEvent,
     HookDisabled as HookDisabledEvent,
-    WithdrawDisabled as WithdrawDisabledEvent
+    WithdrawDisabled as WithdrawDisabledEvent,
+    TokenTableUnlockerV2
 } from '../generated/templates/TokenTableUnlockerV2/TokenTableUnlockerV2'
-import {Initialized, OwnershipTransferred, TTEvent} from '../generated/schema'
+import {
+    Actual,
+    Initialized,
+    OwnershipTransferred,
+    TTEvent,
+    TTUV2InstanceMetadata
+} from '../generated/schema'
 
 export function handleActualCancelled(event: ActualCancelledEvent): void {
+    const context = dataSource.context()
+
     let entity = new TTEvent(
         event.transaction.hash.concatI32(event.logIndex.toI32())
     )
@@ -25,14 +34,15 @@ export function handleActualCancelled(event: ActualCancelledEvent): void {
     entity.pendingAmountClaimable = event.params.pendingAmountClaimable
     entity.didWipeClaimableBalance = event.params.didWipeClaimableBalance
     entity.batchId = event.params.batchId
-
-    const context = dataSource.context()
     entity.projectId = context.getString('projectId')
-
     entity.save()
+
+    store.remove('Actual', event.params.actualId.toHexString())
 }
 
 export function handleActualCreated(event: ActualCreatedEvent): void {
+    const context = dataSource.context()
+
     let entity = new TTEvent(
         event.transaction.hash.concatI32(event.logIndex.toI32())
     )
@@ -44,11 +54,20 @@ export function handleActualCreated(event: ActualCreatedEvent): void {
     entity.batchId = event.params.batchId
     entity.recipient = event.params.recipient
     entity.recipientId = event.params.recipientId
-
-    const context = dataSource.context()
     entity.projectId = context.getString('projectId')
-
     entity.save()
+
+    let actualFromContract = TokenTableUnlockerV2.bind(event.address).actuals(
+        event.params.actualId
+    )
+    let actual = new Actual(event.params.actualId.toHexString())
+    actual.presetId = event.params.presetId
+    actual.startTimestampAbsolute =
+        actualFromContract.getStartTimestampAbsolute()
+    actual.amountClaimed = actualFromContract.getAmountClaimed()
+    actual.totalAmount = actualFromContract.getTotalAmount()
+    actual.projectId = context.getString('projectId')
+    actual.save()
 }
 
 export function handleInitialized(event: InitializedEvent): void {
@@ -79,6 +98,7 @@ export function handleOwnershipTransferred(
 }
 
 export function handlePresetCreated(event: PresetCreatedEvent): void {
+    const context = dataSource.context()
     let entity = new TTEvent(
         event.transaction.hash.concatI32(event.logIndex.toI32())
     )
@@ -86,14 +106,12 @@ export function handlePresetCreated(event: PresetCreatedEvent): void {
     entity.from = event.transaction.from
     entity.timestamp = event.block.timestamp
     entity.presetId = event.params.presetId
-
-    const context = dataSource.context()
     entity.projectId = context.getString('projectId')
-
     entity.save()
 }
 
 export function handleTokensClaimed(event: TokensClaimedEvent): void {
+    const context = dataSource.context()
     let entity = new TTEvent(
         event.transaction.hash.concatI32(event.logIndex.toI32())
     )
@@ -105,11 +123,18 @@ export function handleTokensClaimed(event: TokensClaimedEvent): void {
     entity.caller = event.params.caller
     entity.amount = event.params.amount
     entity.feesCharged = event.params.feesCharged
-
-    const context = dataSource.context()
     entity.projectId = context.getString('projectId')
-
     entity.save()
+
+    let actual = Actual.load(event.params.actualId.toHexString())!
+    actual.amountClaimed = actual.amountClaimed.plus(event.params.amount)
+    actual.save()
+
+    let metadata = TTUV2InstanceMetadata.load(context.getString('projectId'))!
+    metadata.totalAmountClaimed = metadata.totalAmountClaimed.plus(
+        event.params.amount
+    )
+    metadata.save()
 }
 
 export function handleTokensWithdrawn(event: TokensWithdrawnEvent): void {

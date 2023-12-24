@@ -45,6 +45,20 @@ type TTEvent @entity(immutable: true) {
   batchId: BigInt
 }
 
+type TTUV2InstanceMetadata @entity {
+  id: String!
+  totalAmountClaimed: BigInt!
+}
+
+type Actual @entity {
+  id: String!
+  projectId: String!
+  presetId: Bytes!
+  startTimestampAbsolute: BigInt!
+  amountClaimed: BigInt!
+  totalAmount: BigInt!
+}
+
 type Initialized @entity(immutable: true) {
   id: Bytes!
   version: BigInt!
