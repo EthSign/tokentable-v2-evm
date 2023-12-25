@@ -24,6 +24,13 @@ export function handleTokenTableSuiteDeployed(
 
     let metadata = new TTUV2InstanceMetadata(event.params.projectId)
     metadata.totalAmountClaimed = BigInt.fromI32(0)
+    metadata.totalActualCancelledEventCount = 0
+    metadata.totalActualCreatedEventCount = 0
+    metadata.totalCancelDisabledEventCount = 0
+    metadata.totalClaimingDelegateSetEventCount = 0
+    metadata.totalPresetCreatedEventCount = 0
+    metadata.totalTokensClaimedEventCount = 0
+    metadata.totalTokensWithdrawnEventCount = 0
     metadata.save()
 
     let context = new DataSourceContext()

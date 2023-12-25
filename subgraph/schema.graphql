@@ -48,6 +48,13 @@ type TTEvent @entity(immutable: true) {
 type TTUV2InstanceMetadata @entity {
   id: String!
   totalAmountClaimed: BigInt!
+  totalActualCancelledEventCount: Int!
+  totalActualCreatedEventCount: Int!
+  totalPresetCreatedEventCount: Int!
+  totalTokensClaimedEventCount: Int!
+  totalTokensWithdrawnEventCount: Int!
+  totalClaimingDelegateSetEventCount: Int!
+  totalCancelDisabledEventCount: Int!
 }
 
 type Actual @entity {
