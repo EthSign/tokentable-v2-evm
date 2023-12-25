@@ -58,6 +58,9 @@ export function handleActualCreated(event: ActualCreatedEvent): void {
     entity.batchId = event.params.batchId
     entity.recipient = event.params.recipient
     entity.recipientId = event.params.recipientId
+    entity.amountSkipped = TokenTableUnlockerV2.bind(event.address)
+        .actuals(event.params.actualId)
+        .getAmountClaimed()
     entity.projectId = context.getString('projectId')
     entity.save()
 

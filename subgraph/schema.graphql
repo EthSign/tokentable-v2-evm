@@ -43,6 +43,7 @@ type TTEvent @entity(immutable: true) {
   feesCharged: BigInt
   pendingAmountClaimable: BigInt
   batchId: BigInt
+  amountSkipped: BigInt
 }
 
 type TTUV2InstanceMetadata @entity {
