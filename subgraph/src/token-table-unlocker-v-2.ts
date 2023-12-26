@@ -1,4 +1,4 @@
-import {BigInt, Bytes, dataSource, store} from '@graphprotocol/graph-ts'
+import {dataSource, store} from '@graphprotocol/graph-ts'
 import {
     ActualCancelled as ActualCancelledEvent,
     ActualCreated as ActualCreatedEvent,
