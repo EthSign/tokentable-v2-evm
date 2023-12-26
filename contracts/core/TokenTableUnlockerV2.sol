@@ -70,7 +70,7 @@ contract TokenTableUnlockerV2 is
         for (uint256 i = 0; i < presetIds.length; i++) {
             _createPreset(presetIds[i], presets[i], batchId);
         }
-        _callHook(TokenTableUnlockerV2.createPresets.selector, msg.data);
+        _callHook(TokenTableUnlockerV2.createPresets.selector, _msgData());
     }
 
     function createActuals(
@@ -82,7 +82,7 @@ contract TokenTableUnlockerV2 is
         for (uint256 i = 0; i < recipients.length; i++) {
             _createActual(recipients[i], actuals_[i], recipientIds[i], batchId);
         }
-        _callHook(this.createActuals.selector, msg.data);
+        _callHook(this.createActuals.selector, _msgData());
     }
 
     function withdrawDeposit(
@@ -91,7 +91,7 @@ contract TokenTableUnlockerV2 is
         if (!isWithdrawable) revert NotPermissioned();
         IERC20(getProjectToken()).safeTransfer(_msgSender(), amount);
         emit TokensWithdrawn(_msgSender(), amount);
-        _callHook(TokenTableUnlockerV2.withdrawDeposit.selector, msg.data);
+        _callHook(TokenTableUnlockerV2.withdrawDeposit.selector, _msgData());
     }
 
     function claim(
@@ -105,7 +105,7 @@ contract TokenTableUnlockerV2 is
             }
             _claim(actualIds[i], claimTos[i], batchId);
         }
-        _callHook(TokenTableUnlockerV2.claim.selector, msg.data);
+        _callHook(TokenTableUnlockerV2.claim.selector, _msgData());
     }
 
     function delegateClaim(
@@ -116,7 +116,7 @@ contract TokenTableUnlockerV2 is
         for (uint256 i = 0; i < actualIds.length; i++) {
             _claim(actualIds[i], address(0), batchId);
         }
-        _callHook(TokenTableUnlockerV2.delegateClaim.selector, msg.data);
+        _callHook(TokenTableUnlockerV2.delegateClaim.selector, _msgData());
     }
 
     function cancel(
@@ -151,13 +151,13 @@ contract TokenTableUnlockerV2 is
             );
             delete actuals[actualId];
         }
-        _callHook(TokenTableUnlockerV2.cancel.selector, msg.data);
+        _callHook(TokenTableUnlockerV2.cancel.selector, _msgData());
     }
 
     function setHook(ITTHook hook_) external virtual override onlyOwner {
         if (!isHookable) revert NotPermissioned();
         hook = hook_;
-        _callHook(TokenTableUnlockerV2.setHook.selector, msg.data);
+        _callHook(TokenTableUnlockerV2.setHook.selector, _msgData());
     }
 
     function setClaimingDelegate(
@@ -170,20 +170,20 @@ contract TokenTableUnlockerV2 is
     function disableCancel() external virtual override onlyOwner {
         isCancelable = false;
         emit CancelDisabled();
-        _callHook(TokenTableUnlockerV2.disableCancel.selector, msg.data);
+        _callHook(TokenTableUnlockerV2.disableCancel.selector, _msgData());
     }
 
     function disableHook() external virtual override onlyOwner {
         isHookable = false;
         emit HookDisabled();
-        _callHook(TokenTableUnlockerV2.disableHook.selector, msg.data);
+        _callHook(TokenTableUnlockerV2.disableHook.selector, _msgData());
         hook = ITTHook(address(0));
     }
 
     function disableWithdraw() external virtual override onlyOwner {
         isWithdrawable = false;
         emit WithdrawDisabled();
-        _callHook(TokenTableUnlockerV2.disableWithdraw.selector, msg.data);
+        _callHook(TokenTableUnlockerV2.disableWithdraw.selector, _msgData());
     }
 
     function transferOwnership(
@@ -213,7 +213,8 @@ contract TokenTableUnlockerV2 is
         uint256 batchId
     ) internal virtual {
         if (!_presetIsEmpty(_presets[presetId])) revert PresetExists();
-        if (!_presetHasValidFormat(preset)) revert InvalidPresetFormat();
+        if (!_presetHasValidFormat(preset) || presetId == 0)
+            revert InvalidPresetFormat();
         _presets[presetId] = preset;
         emit PresetCreated(presetId, batchId);
     }
@@ -298,7 +299,7 @@ contract TokenTableUnlockerV2 is
     }
 
     function version() external pure returns (string memory) {
-        return "2.5.2";
+        return "2.5.3";
     }
 
     function calculateAmountClaimable(
@@ -328,12 +329,16 @@ contract TokenTableUnlockerV2 is
     {
         uint256 tokenPrecisionDecimals = 10 ** 5;
         Actual memory actual = actuals[actualId];
+        if (actual.presetId == 0) revert PresetDoesNotExist();
         Preset memory preset = _presets[actual.presetId];
         uint256 timePrecisionDecimals = preset.stream ? 10 ** 5 : 1;
         uint256 i;
         uint256 latestIncompleteLinearIndex;
-        if (claimTimestampAbsolute < actual.startTimestampAbsolute)
-            return (0, actual.amountClaimed);
+        if (
+            claimTimestampAbsolute <
+            actual.startTimestampAbsolute +
+                preset.linearStartTimestampsRelative[0]
+        ) return (0, actual.amountClaimed);
         uint256 claimTimestampRelative = claimTimestampAbsolute -
             actual.startTimestampAbsolute;
         for (i = 0; i < preset.linearStartTimestampsRelative.length; i++) {
