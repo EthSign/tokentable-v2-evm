@@ -178,7 +178,7 @@ describe('V2', () => {
                 await expect(
                     unlocker
                         .connect(investor)
-                        .createPresets([presetId], [preset], 0)
+                        .createPresets([presetId], [preset], 0, [])
                 ).to.be.revertedWithCustomError(
                     unlocker,
                     'OwnableUnauthorizedAccount'
@@ -186,7 +186,7 @@ describe('V2', () => {
                 await expect(
                     await unlocker
                         .connect(founder)
-                        .createPresets([presetId], [preset], 0)
+                        .createPresets([presetId], [preset], 0, [])
                 )
                     .to.emit(unlocker, 'PresetCreated')
                     .withArgs(presetId, 0)
@@ -206,7 +206,7 @@ describe('V2', () => {
             it('should create an actual and enforce permissions, no skipping', async () => {
                 await unlocker
                     .connect(founder)
-                    .createPresets([presetId], [preset], 0)
+                    .createPresets([presetId], [preset], 0, [])
                 await expect(
                     unlocker.connect(investor).createActuals(
                         [investor.address],
@@ -219,7 +219,8 @@ describe('V2', () => {
                             }
                         ],
                         [0],
-                        0
+                        0,
+                        []
                     )
                 ).to.be.revertedWithCustomError(
                     unlocker,
@@ -237,7 +238,8 @@ describe('V2', () => {
                             }
                         ],
                         [0],
-                        0
+                        0,
+                        []
                     )
                 ).to.be.revertedWithCustomError(unlocker, 'InvalidPresetFormat')
                 await expect(
@@ -252,7 +254,8 @@ describe('V2', () => {
                             }
                         ],
                         [0],
-                        0
+                        0,
+                        []
                     )
                 ).to.be.revertedWithCustomError(unlocker, 'InvalidSkipAmount')
                 const createActualTx = await unlocker
@@ -268,7 +271,8 @@ describe('V2', () => {
                             }
                         ],
                         [0],
-                        0
+                        0,
+                        []
                     )
                 const actualId = (
                     await futureToken.tokensOfOwner(investor.address)
@@ -281,7 +285,7 @@ describe('V2', () => {
             it('should let founder withdraw deposit and enforce permissions', async () => {
                 await unlocker
                     .connect(founder)
-                    .createPresets([presetId], [preset], 0)
+                    .createPresets([presetId], [preset], 0, [])
                 await unlocker.connect(founder).createActuals(
                     [investor.address],
                     [
@@ -293,7 +297,8 @@ describe('V2', () => {
                         }
                     ],
                     [0],
-                    0
+                    0,
+                    []
                 )
                 await projectToken
                     .connect(founder)
@@ -301,13 +306,15 @@ describe('V2', () => {
                 await expect(
                     unlocker
                         .connect(investor)
-                        .withdrawDeposit(amountDepositingNow)
+                        .withdrawDeposit(amountDepositingNow, '0x00')
                 ).to.be.revertedWithCustomError(
                     unlocker,
                     'OwnableUnauthorizedAccount'
                 )
                 await expect(
-                    unlocker.connect(founder).withdrawDeposit(totalAmount + 1n)
+                    unlocker
+                        .connect(founder)
+                        .withdrawDeposit(totalAmount + 1n, '0x00')
                 ).to.be.revertedWithCustomError(
                     projectToken,
                     'ERC20InsufficientBalance'
@@ -318,7 +325,7 @@ describe('V2', () => {
                 await expect(
                     await unlocker
                         .connect(founder)
-                        .withdrawDeposit(amountDepositingNow)
+                        .withdrawDeposit(amountDepositingNow, '0x00')
                 )
                     .to.emit(unlocker, 'TokensWithdrawn')
                     .withArgs(founder.address, amountDepositingNow)
@@ -369,7 +376,8 @@ describe('V2', () => {
                                 stream: false
                             }
                         ],
-                        0
+                        0,
+                        []
                     )
                 })
 
@@ -389,7 +397,8 @@ describe('V2', () => {
                                 }
                             ],
                             [0],
-                            0
+                            0,
+                            []
                         )
                         actualId = (
                             await futureToken.tokensOfOwner(investor.address)
@@ -434,7 +443,8 @@ describe('V2', () => {
                                 }
                             ],
                             [0],
-                            0
+                            0,
+                            []
                         )
                         actualId = (
                             await futureToken.tokensOfOwner(investor.address)
@@ -465,7 +475,7 @@ describe('V2', () => {
                 amountDepositingNow = 0n
                 await unlocker
                     .connect(founder)
-                    .createPresets([presetId], [preset], 0)
+                    .createPresets([presetId], [preset], 0, [])
                 await unlocker.connect(founder).createActuals(
                     [investor.address],
                     [
@@ -477,7 +487,8 @@ describe('V2', () => {
                         }
                     ],
                     [0],
-                    0
+                    0,
+                    []
                 )
                 const actualId = (
                     await futureToken.tokensOfOwner(investor.address)
@@ -507,7 +518,7 @@ describe('V2', () => {
                 await expect(
                     unlocker
                         .connect(investor)
-                        .claim([actualId], [ZeroAddress], 0)
+                        .claim([actualId], [ZeroAddress], 0, [])
                 ).to.be.revertedWithCustomError(
                     projectToken,
                     'ERC20InsufficientBalance'
@@ -520,7 +531,7 @@ describe('V2', () => {
                 await expect(
                     await unlocker
                         .connect(investor)
-                        .claim([actualId], [ZeroAddress], 0)
+                        .claim([actualId], [ZeroAddress], 0, [])
                 )
                     .to.emit(unlocker, 'TokensClaimed')
                     .withArgs(
@@ -556,7 +567,7 @@ describe('V2', () => {
                 await expect(
                     await unlocker
                         .connect(investor)
-                        .claim([actualId], [ZeroAddress], 0)
+                        .claim([actualId], [ZeroAddress], 0, [])
                 )
                     .to.emit(unlocker, 'TokensClaimed')
                     .withArgs(
@@ -592,7 +603,7 @@ describe('V2', () => {
                 await expect(
                     await unlocker
                         .connect(investor)
-                        .claim([actualId], [ZeroAddress], 0)
+                        .claim([actualId], [ZeroAddress], 0, [])
                 )
                     .to.emit(unlocker, 'TokensClaimed')
                     .withArgs(
@@ -628,7 +639,7 @@ describe('V2', () => {
                 await expect(
                     await unlocker
                         .connect(investor)
-                        .claim([actualId], [ZeroAddress], 0)
+                        .claim([actualId], [ZeroAddress], 0, [])
                 )
                     .to.emit(unlocker, 'TokensClaimed')
                     .withArgs(
@@ -648,7 +659,7 @@ describe('V2', () => {
             it('should let founders or cancelables cancel and refund the correct amount', async () => {
                 await unlocker
                     .connect(founder)
-                    .createPresets([presetId], [preset], 0)
+                    .createPresets([presetId], [preset], 0, [])
                 await unlocker.connect(founder).createActuals(
                     [investor.address],
                     [
@@ -660,7 +671,8 @@ describe('V2', () => {
                         }
                     ],
                     [0],
-                    0
+                    0,
+                    []
                 )
                 await projectToken
                     .connect(founder)
@@ -670,7 +682,9 @@ describe('V2', () => {
                 )[0]
                 // Should revert when calling without permission
                 await expect(
-                    unlocker.connect(investor).cancel([actualId], [false], 0)
+                    unlocker
+                        .connect(investor)
+                        .cancel([actualId], [false], 0, [])
                 ).to.be.revertedWithCustomError(
                     unlocker,
                     'OwnableUnauthorizedAccount'
@@ -693,7 +707,7 @@ describe('V2', () => {
                     )
                 await unlocker
                     .connect(investor)
-                    .claim([actualId], [ZeroAddress], 0)
+                    .claim([actualId], [ZeroAddress], 0, [])
                 // Time jump to beginning of second to last linear and cancel
                 claimTimestampAbsolute =
                     startTimestampAbsolute + linearStartTimestampsRelative[5]
@@ -712,7 +726,7 @@ describe('V2', () => {
                     ) - amountSentToInvestor
                 const cancelTx = await unlocker
                     .connect(founder)
-                    .cancel([actualId], [false], 0)
+                    .cancel([actualId], [false], 0, [])
                 await expect(cancelTx)
                     .to.emit(unlocker, 'ActualCancelled')
                     .withArgs(actualId, amountShouldSendToInvestor, false, 0)
@@ -771,7 +785,7 @@ describe('V2', () => {
                 // Set up two actuals
                 await unlocker
                     .connect(founder)
-                    .createPresets([presetId], [preset], 0)
+                    .createPresets([presetId], [preset], 0, [])
                 await unlocker.connect(founder).createActuals(
                     [investor.address],
                     [
@@ -783,7 +797,8 @@ describe('V2', () => {
                         }
                     ],
                     [0],
-                    0
+                    0,
+                    []
                 )
                 await unlocker.connect(founder).createActuals(
                     [investor.address],
@@ -796,7 +811,8 @@ describe('V2', () => {
                         }
                     ],
                     [0],
-                    0
+                    0,
+                    []
                 )
                 await projectToken
                     .connect(founder)
@@ -824,10 +840,10 @@ describe('V2', () => {
                 )
                 await unlocker
                     .connect(investor)
-                    .claim([actualId0], [ZeroAddress], 0)
+                    .claim([actualId0], [ZeroAddress], 0, [])
                 await unlocker
                     .connect(investor)
-                    .claim([actualId1], [ZeroAddress], 0)
+                    .claim([actualId1], [ZeroAddress], 0, [])
                 // Skip again
                 await setNextBlockTimestamp(
                     startTimestampAbsolute +
@@ -924,7 +940,7 @@ describe('V2', () => {
                     .approve(await unlocker_.getAddress(), BIPS_PRECISION)
                 await unlocker_
                     .connect(founder)
-                    .createPresets([presetId], [preset], 0)
+                    .createPresets([presetId], [preset], 0, [])
                 await unlocker_.connect(founder).createActuals(
                     [investor.address],
                     [
@@ -936,7 +952,8 @@ describe('V2', () => {
                         }
                     ],
                     [0],
-                    0
+                    0,
+                    []
                 )
                 await unlocker_.connect(founder).createActuals(
                     [investor.address],
@@ -949,7 +966,8 @@ describe('V2', () => {
                         }
                     ],
                     [0],
-                    0
+                    0,
+                    []
                 )
                 const [actualId0, actualId1] = await futureToken_.tokensOfOwner(
                     investor.address
@@ -994,7 +1012,8 @@ describe('V2', () => {
                             }
                         ],
                         [0],
-                        0
+                        0,
+                        []
                     )
                 ).to.be.revertedWithoutReason()
                 await expect(
@@ -1048,7 +1067,7 @@ describe('V2', () => {
                     .approve(await unlocker2.getAddress(), BIPS_PRECISION)
                 await unlocker2
                     .connect(founder)
-                    .createPresets([presetId], [preset], 0)
+                    .createPresets([presetId], [preset], 0, [])
                 await unlocker2.connect(founder).createActuals(
                     [investor.address],
                     [
@@ -1060,7 +1079,8 @@ describe('V2', () => {
                         }
                     ],
                     [0],
-                    0
+                    0,
+                    []
                 )
                 await unlocker2.connect(founder).createActuals(
                     [investor.address],
@@ -1073,7 +1093,8 @@ describe('V2', () => {
                         }
                     ],
                     [0],
-                    0
+                    0,
+                    []
                 )
                 const [actualId02, actualId12] =
                     await futureToken2.tokensOfOwner(investor.address)
@@ -1118,7 +1139,8 @@ describe('V2', () => {
                         }
                     ],
                     [0],
-                    0
+                    0,
+                    []
                 )
                 await futureToken2.tokensOfOwner(investor.address)
             })

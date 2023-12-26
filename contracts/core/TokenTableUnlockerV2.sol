@@ -63,9 +63,10 @@ contract TokenTableUnlockerV2 is
 
     // solhint-disable-next-line ordering
     function createPresets(
-        bytes32[] memory presetIds,
-        Preset[] memory presets,
-        uint256 batchId
+        bytes32[] calldata presetIds,
+        Preset[] calldata presets,
+        uint256 batchId,
+        bytes[] calldata
     ) external virtual override onlyOwner {
         for (uint256 i = 0; i < presetIds.length; i++) {
             _createPreset(presetIds[i], presets[i], batchId);
@@ -74,10 +75,11 @@ contract TokenTableUnlockerV2 is
     }
 
     function createActuals(
-        address[] memory recipients,
-        Actual[] memory actuals_,
+        address[] calldata recipients,
+        Actual[] calldata actuals_,
         uint256[] calldata recipientIds,
-        uint256 batchId
+        uint256 batchId,
+        bytes[] calldata
     ) external virtual override onlyOwner {
         for (uint256 i = 0; i < recipients.length; i++) {
             _createActual(recipients[i], actuals_[i], recipientIds[i], batchId);
@@ -86,7 +88,8 @@ contract TokenTableUnlockerV2 is
     }
 
     function withdrawDeposit(
-        uint256 amount
+        uint256 amount,
+        bytes calldata
     ) external virtual override onlyOwner {
         if (!isWithdrawable) revert NotPermissioned();
         IERC20(getProjectToken()).safeTransfer(_msgSender(), amount);
@@ -97,7 +100,8 @@ contract TokenTableUnlockerV2 is
     function claim(
         uint256[] calldata actualIds,
         address[] calldata claimTos,
-        uint256 batchId
+        uint256 batchId,
+        bytes[] calldata
     ) external virtual override nonReentrant {
         for (uint256 i = 0; i < actualIds.length; i++) {
             if (futureToken.ownerOf(actualIds[i]) != _msgSender()) {
@@ -110,7 +114,8 @@ contract TokenTableUnlockerV2 is
 
     function delegateClaim(
         uint256[] calldata actualIds,
-        uint256 batchId
+        uint256 batchId,
+        bytes[] calldata
     ) external virtual override nonReentrant {
         if (_msgSender() != claimingDelegate) revert NotPermissioned();
         for (uint256 i = 0; i < actualIds.length; i++) {
@@ -122,7 +127,8 @@ contract TokenTableUnlockerV2 is
     function cancel(
         uint256[] calldata actualIds,
         bool[] calldata shouldWipeClaimableBalance,
-        uint256 batchId
+        uint256 batchId,
+        bytes[] calldata
     )
         external
         virtual
