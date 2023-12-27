@@ -20,7 +20,7 @@ contract MockZETA is IERC20Metadata {
     }
 
     function totalSupply() external pure returns (uint256) {
-        return 2100000000;
+        return 2100000000 * 10 ** 18;
     }
 
     function balanceOf(address account) external view returns (uint256) {
