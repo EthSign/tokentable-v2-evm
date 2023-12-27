@@ -1,4 +1,4 @@
-import {dataSource, store} from '@graphprotocol/graph-ts'
+import {Bytes, dataSource, store} from '@graphprotocol/graph-ts'
 import {
     ActualCancelled as ActualCancelledEvent,
     ActualCreated as ActualCreatedEvent,
@@ -13,6 +13,7 @@ import {
     WithdrawDisabled as WithdrawDisabledEvent,
     TokenTableUnlockerV2
 } from '../generated/templates/TokenTableUnlockerV2/TokenTableUnlockerV2'
+import {Transfer as TransferEvent} from '../generated/templates/ProjectERC20/IERC20'
 import {
     Actual,
     Initialized,
@@ -20,6 +21,12 @@ import {
     TTEvent,
     TTUV2InstanceMetadata
 } from '../generated/schema'
+
+function getInitializedEventID(): Bytes {
+    return Bytes.fromUTF8(
+        `Initialized-${dataSource.context().getString('projectId')}`
+    )
+}
 
 export function handleActualCancelled(event: ActualCancelledEvent): void {
     const context = dataSource.context()
@@ -35,6 +42,7 @@ export function handleActualCancelled(event: ActualCancelledEvent): void {
     entity.didWipeClaimableBalance = event.params.didWipeClaimableBalance
     entity.batchId = event.params.batchId
     entity.projectId = context.getString('projectId')
+    entity.tx = event.transaction.hash
     entity.save()
 
     store.remove('Actual', event.params.actualId.toHexString())
@@ -62,6 +70,7 @@ export function handleActualCreated(event: ActualCreatedEvent): void {
         .actuals(event.params.actualId)
         .getAmountClaimed()
     entity.projectId = context.getString('projectId')
+    entity.tx = event.transaction.hash
     entity.save()
 
     let actualFromContract = TokenTableUnlockerV2.bind(event.address).actuals(
@@ -82,13 +91,12 @@ export function handleActualCreated(event: ActualCreatedEvent): void {
 }
 
 export function handleInitialized(event: InitializedEvent): void {
-    let entity = new Initialized(
-        event.transaction.hash.concatI32(event.logIndex.toI32())
-    )
+    let entity = new Initialized(getInitializedEventID())
     entity.version = event.params.version
     entity.blockNumber = event.block.number
     entity.blockTimestamp = event.block.timestamp
     entity.transactionHash = event.transaction.hash
+    entity.contractAddress = event.address
     entity.save()
 }
 
@@ -116,6 +124,7 @@ export function handlePresetCreated(event: PresetCreatedEvent): void {
     entity.timestamp = event.block.timestamp
     entity.presetId = event.params.presetId
     entity.projectId = context.getString('projectId')
+    entity.tx = event.transaction.hash
     entity.save()
 
     let metadata = TTUV2InstanceMetadata.load(context.getString('projectId'))!
@@ -137,6 +146,7 @@ export function handleTokensClaimed(event: TokensClaimedEvent): void {
     entity.amount = event.params.amount
     entity.feesCharged = event.params.feesCharged
     entity.projectId = context.getString('projectId')
+    entity.tx = event.transaction.hash
     entity.save()
 
     let actual = Actual.load(event.params.actualId.toHexString())!
@@ -163,6 +173,7 @@ export function handleTokensWithdrawn(event: TokensWithdrawnEvent): void {
     entity.by = event.params.by
     entity.amount = event.params.amount
     entity.projectId = context.getString('projectId')
+    entity.tx = event.transaction.hash
     entity.save()
 
     let metadata = TTUV2InstanceMetadata.load(context.getString('projectId'))!
@@ -183,6 +194,7 @@ export function handleClaimingDelegateSet(
     entity.timestamp = event.block.timestamp
     entity.delegate = event.params.delegate
     entity.projectId = context.getString('projectId')
+    entity.tx = event.transaction.hash
     entity.save()
 
     let metadata = TTUV2InstanceMetadata.load(context.getString('projectId'))!
@@ -200,6 +212,7 @@ export function handleCancelDisabled(event: CancelDisabledEvent): void {
     entity.from = event.transaction.from
     entity.timestamp = event.block.timestamp
     entity.projectId = context.getString('projectId')
+    entity.tx = event.transaction.hash
     entity.save()
 
     let metadata = TTUV2InstanceMetadata.load(context.getString('projectId'))!
@@ -217,6 +230,7 @@ export function handleHookDisabled(event: HookDisabledEvent): void {
     entity.from = event.transaction.from
     entity.timestamp = event.block.timestamp
     entity.projectId = context.getString('projectId')
+    entity.tx = event.transaction.hash
     entity.save()
 }
 
@@ -229,6 +243,30 @@ export function handleWithdrawDisabled(event: WithdrawDisabledEvent): void {
     entity.event = 'WithdrawDisabled'
     entity.from = event.transaction.from
     entity.timestamp = event.block.timestamp
+    entity.tx = event.transaction.hash
     entity.projectId = context.getString('projectId')
+    entity.save()
+}
+
+export function handleDeposit(event: TransferEvent): void {
+    if (
+        event.params.to !=
+        Initialized.load(getInitializedEventID())!.contractAddress
+    ) {
+        return
+    }
+
+    const context = dataSource.context()
+
+    let entity = new TTEvent(
+        event.transaction.hash.concatI32(event.logIndex.toI32())
+    )
+    entity.event = 'Deposit'
+    entity.from = event.params.from
+    entity.to = event.params.to
+    entity.amount = event.params.value
+    entity.tx = event.transaction.hash
+    entity.projectId = context.getString('projectId')
+    entity.timestamp = event.block.timestamp
     entity.save()
 }

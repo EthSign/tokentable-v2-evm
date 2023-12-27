@@ -22,12 +22,14 @@ enum TTEventType {
   HookDisabled
   WithdrawDisabled
   FutureTokenTransferred
+  Deposit
 }
 
 type TTEvent @entity(immutable: true) {
   id: Bytes!
   from: Bytes!
   timestamp: BigInt!
+  tx: Bytes!
   event: TTEventType!
   projectId: String!
   presetId: Bytes
@@ -73,6 +75,7 @@ type Initialized @entity(immutable: true) {
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
+  contractAddress: Bytes!
 }
 
 type OwnershipTransferred @entity(immutable: true) {
