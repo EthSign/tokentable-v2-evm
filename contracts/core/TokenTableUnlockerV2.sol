@@ -417,7 +417,7 @@ contract TokenTableUnlockerV2 is
     function _updateActualAndSend(
         uint256 actualId,
         address recipient
-    ) internal returns (uint256 deltaAmountClaimable_) {
+    ) internal virtual returns (uint256 deltaAmountClaimable_) {
         (
             uint256 deltaAmountClaimable,
             uint256 updatedAmountClaimed
@@ -430,7 +430,7 @@ contract TokenTableUnlockerV2 is
 
     function _chargeFees(
         uint256 amount
-    ) internal returns (uint256 feesCollected) {
+    ) internal virtual returns (uint256 feesCollected) {
         if (
             address(deployer) != address(0) &&
             address(deployer.feeCollector()) != address(0)
