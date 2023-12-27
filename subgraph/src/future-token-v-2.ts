@@ -1,6 +1,6 @@
 import {BigInt, dataSource} from '@graphprotocol/graph-ts'
 import {Transfer as TransferEvent} from '../generated/templates/TTFutureTokenV2/TTFutureTokenV2'
-import {TokenTableUser} from '../generated/schema'
+import {TTEvent, TokenTableUser} from '../generated/schema'
 
 function findIndexWithMatching(
     projectId: string,
@@ -53,4 +53,13 @@ export function handleTransfer(event: TransferEvent): void {
         to.actualIds = actualIds
     }
     to.save()
+
+    let transferEvent = new TTEvent(
+        event.transaction.hash.concatI32(event.logIndex.toI32())
+    )
+    transferEvent.event = 'FutureTokenTransferred'
+    transferEvent.from = event.params.from
+    transferEvent.to = event.params.to
+    transferEvent.actualId = event.params.tokenId
+    transferEvent.save()
 }
