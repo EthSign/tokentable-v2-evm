@@ -4,7 +4,11 @@ import {
     TokenTableSuiteDeployed,
     TTUV2InstanceMetadata
 } from '../generated/schema'
-import {TokenTableUnlockerV2, TTFutureTokenV2} from '../generated/templates'
+import {
+    TokenTableUnlockerV2,
+    TTFutureTokenV2,
+    ProjectERC20
+} from '../generated/templates'
 import {TokenTableUnlockerV2 as TTUV2Instance} from '../generated/templates/TokenTableUnlockerV2/TokenTableUnlockerV2'
 
 export function handleTokenTableSuiteDeployed(
@@ -40,4 +44,8 @@ export function handleTokenTableSuiteDeployed(
 
     TokenTableUnlockerV2.createWithContext(event.params.unlocker, context)
     TTFutureTokenV2.createWithContext(event.params.futureToken, context)
+    ProjectERC20.createWithContext(
+        TTUV2Instance.bind(event.params.unlocker).getProjectToken(),
+        context
+    )
 }

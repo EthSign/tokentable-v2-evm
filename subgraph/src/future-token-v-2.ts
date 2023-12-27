@@ -63,5 +63,6 @@ export function handleTransfer(event: TransferEvent): void {
     transferEvent.actualId = event.params.tokenId
     transferEvent.timestamp = event.block.timestamp
     transferEvent.projectId = projectId
+    transferEvent.tx = event.transaction.hash
     transferEvent.save()
 }
