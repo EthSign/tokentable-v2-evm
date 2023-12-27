@@ -42,7 +42,7 @@ export function handleActualCancelled(event: ActualCancelledEvent): void {
     entity.didWipeClaimableBalance = event.params.didWipeClaimableBalance
     entity.batchId = event.params.batchId
     entity.projectId = context.getString('projectId')
-    entity.tx = event.transaction.hash
+    entity.transactionHash = event.transaction.hash
     entity.save()
 
     store.remove('Actual', event.params.actualId.toHexString())
@@ -70,7 +70,7 @@ export function handleActualCreated(event: ActualCreatedEvent): void {
         .actuals(event.params.actualId)
         .getAmountClaimed()
     entity.projectId = context.getString('projectId')
-    entity.tx = event.transaction.hash
+    entity.transactionHash = event.transaction.hash
     entity.save()
 
     let actualFromContract = TokenTableUnlockerV2.bind(event.address).actuals(
@@ -124,7 +124,7 @@ export function handlePresetCreated(event: PresetCreatedEvent): void {
     entity.timestamp = event.block.timestamp
     entity.presetId = event.params.presetId
     entity.projectId = context.getString('projectId')
-    entity.tx = event.transaction.hash
+    entity.transactionHash = event.transaction.hash
     entity.save()
 
     let metadata = TTUV2InstanceMetadata.load(context.getString('projectId'))!
@@ -146,7 +146,7 @@ export function handleTokensClaimed(event: TokensClaimedEvent): void {
     entity.amount = event.params.amount
     entity.feesCharged = event.params.feesCharged
     entity.projectId = context.getString('projectId')
-    entity.tx = event.transaction.hash
+    entity.transactionHash = event.transaction.hash
     entity.save()
 
     let actual = Actual.load(event.params.actualId.toHexString())!
@@ -173,7 +173,7 @@ export function handleTokensWithdrawn(event: TokensWithdrawnEvent): void {
     entity.by = event.params.by
     entity.amount = event.params.amount
     entity.projectId = context.getString('projectId')
-    entity.tx = event.transaction.hash
+    entity.transactionHash = event.transaction.hash
     entity.save()
 
     let metadata = TTUV2InstanceMetadata.load(context.getString('projectId'))!
@@ -194,7 +194,7 @@ export function handleClaimingDelegateSet(
     entity.timestamp = event.block.timestamp
     entity.delegate = event.params.delegate
     entity.projectId = context.getString('projectId')
-    entity.tx = event.transaction.hash
+    entity.transactionHash = event.transaction.hash
     entity.save()
 
     let metadata = TTUV2InstanceMetadata.load(context.getString('projectId'))!
@@ -212,7 +212,7 @@ export function handleCancelDisabled(event: CancelDisabledEvent): void {
     entity.from = event.transaction.from
     entity.timestamp = event.block.timestamp
     entity.projectId = context.getString('projectId')
-    entity.tx = event.transaction.hash
+    entity.transactionHash = event.transaction.hash
     entity.save()
 
     let metadata = TTUV2InstanceMetadata.load(context.getString('projectId'))!
@@ -230,7 +230,7 @@ export function handleHookDisabled(event: HookDisabledEvent): void {
     entity.from = event.transaction.from
     entity.timestamp = event.block.timestamp
     entity.projectId = context.getString('projectId')
-    entity.tx = event.transaction.hash
+    entity.transactionHash = event.transaction.hash
     entity.save()
 }
 
@@ -243,7 +243,7 @@ export function handleWithdrawDisabled(event: WithdrawDisabledEvent): void {
     entity.event = 'WithdrawDisabled'
     entity.from = event.transaction.from
     entity.timestamp = event.block.timestamp
-    entity.tx = event.transaction.hash
+    entity.transactionHash = event.transaction.hash
     entity.projectId = context.getString('projectId')
     entity.save()
 }
@@ -265,7 +265,7 @@ export function handleDeposit(event: TransferEvent): void {
     entity.from = event.params.from
     entity.to = event.params.to
     entity.amount = event.params.value
-    entity.tx = event.transaction.hash
+    entity.transactionHash = event.transaction.hash
     entity.projectId = context.getString('projectId')
     entity.timestamp = event.block.timestamp
     entity.save()
