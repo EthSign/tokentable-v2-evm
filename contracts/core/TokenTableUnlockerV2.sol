@@ -305,7 +305,7 @@ contract TokenTableUnlockerV2 is
     }
 
     function version() external pure returns (string memory) {
-        return "2.5.3";
+        return "2.5.4";
     }
 
     function calculateAmountClaimable(
