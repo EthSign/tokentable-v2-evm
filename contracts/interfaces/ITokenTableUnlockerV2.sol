@@ -258,7 +258,7 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
     ) external view virtual returns (bytes memory);
 
     /**
-     * @notice Returns the Actuals struct based on the input ID.
+     * @notice Returns the Actual struct based on the input ID.
      */
     function actuals(
         uint256 actualId
