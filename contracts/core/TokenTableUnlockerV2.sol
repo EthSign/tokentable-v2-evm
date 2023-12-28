@@ -31,7 +31,7 @@ contract TokenTableUnlockerV2 is
     bool public override isWithdrawable;
 
     mapping(bytes32 => Preset) internal _presets;
-    mapping(uint256 => Actual) public actuals;
+    mapping(uint256 => Actual) public override actuals;
     mapping(uint256 => uint256)
         public
         override pendingAmountClaimableForCancelledActuals;

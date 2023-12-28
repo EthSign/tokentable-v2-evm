@@ -258,6 +258,13 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
     ) external view virtual returns (bytes memory);
 
     /**
+     * @notice Returns the Actuals struct based on the input ID.
+     */
+    function actuals(
+        uint256 actualId
+    ) external view virtual returns (bytes32, uint256, uint256, uint256);
+
+    /**
      * @return The basis point precision of this Unlocker.
      */
     function BIPS_PRECISION() external pure virtual returns (uint256);
