@@ -87,13 +87,13 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
      * @param presetIds These IDs can be the hashes of a plaintext preset names but really there is no restriction. Will revert if they already exist.
      * @param presets An array of `Preset` structs.
      * @param batchId Emitted as an event reserved for EthSign frontend use. This parameter has no effect on contract execution.
-     * @param extraData An ERC-5750-esque parameter that's passed to the hook directly.
+     * @param extraData An ERC-5750 parameter that's passed to the hook directly.
      */
     function createPresets(
         bytes32[] calldata presetIds,
         Preset[] calldata presets,
         uint256 batchId,
-        bytes[] calldata extraData
+        bytes calldata extraData
     ) external virtual;
 
     /**
@@ -103,21 +103,21 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
      * @param actuals An array of `Actual` structs.
      * @param recipientIds Emitted as an event reserved for EthSign frontend use. This parameter has no effect on contract execution.
      * @param batchId Emitted as an event reserved for EthSign frontend use. This parameter has no effect on contract execution.
-     * @param extraData An ERC-5750-esque parameter that's passed to the hook directly.
+     * @param extraData An ERC-5750 parameter that's passed to the hook directly.
      */
     function createActuals(
         address[] calldata recipients,
         Actual[] calldata actuals,
         uint256[] calldata recipientIds,
         uint256 batchId,
-        bytes[] calldata extraData
+        bytes calldata extraData
     ) external virtual;
 
     /**
      * @notice Withdraws existing deposit from the contract.
      * @dev Emits `TokensWithdrawn`. Only callable by the owner.
      * @param amount Amount of deposited funds the founder wishes to withdraw.
-     * @param extraData An ERC-5750-esque parameter that's passed to the hook directly.
+     * @param extraData An ERC-5750 parameter that's passed to the hook directly.
      */
     function withdrawDeposit(
         uint256 amount,
@@ -130,13 +130,13 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
      * @param actualIds The IDs of the unlocking schedules that we are trying to claim from.
      * @param claimTos If we want to send the claimed tokens to an address other than the caller. To send the claimed tokens to the caller (default behavior), pass in `ethers.constants.AddressZero`.
      * @param batchId Emitted as an event reserved for EthSign frontend use. This parameter has no effect on contract execution.
-     * @param extraData An ERC-5750-esque parameter that's passed to the hook directly.
+     * @param extraData An ERC-5750 parameter that's passed to the hook directly.
      */
     function claim(
         uint256[] calldata actualIds,
         address[] calldata claimTos,
         uint256 batchId,
-        bytes[] calldata extraData
+        bytes calldata extraData
     ) external virtual;
 
     /**
@@ -144,12 +144,12 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
      * @dev Emits `TokensClaimed`. Only callable by the claiming delegate.
      * @param actualIds The IDs of the unlocking schedules that we are trying to claim from on behalf of the recipients.
      * @param batchId Emitted as an event reserved for EthSign frontend use. This parameter has no effect on contract execution.
-     * @param extraData An ERC-5750-esque parameter that's passed to the hook directly.
+     * @param extraData An ERC-5750 parameter that's passed to the hook directly.
      */
     function delegateClaim(
         uint256[] calldata actualIds,
         uint256 batchId,
-        bytes[] calldata extraData
+        bytes calldata extraData
     ) external virtual;
 
     /**
@@ -158,14 +158,14 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
      * @param actualIds The ID of the actual unlocking schedule that we want to cancel.
      * @param shouldWipeClaimableBalance If the unlocked and claimable balance of the canceled schedule should be wiped. This is usually used to delete an erroneously created schedule that has already started unlocking.
      * @param batchId Emitted as an event reserved for EthSign frontend use. This parameter has no effect on contract execution.
-     * @param extraData An ERC-5750-esque parameter that's passed to the hook directly.
+     * @param extraData An ERC-5750 parameter that's passed to the hook directly.
      * @return pendingAmountClaimables Number of tokens eligible to be claimed by the affected stakeholders at the moment of cancellation.
      */
     function cancel(
         uint256[] calldata actualIds,
         bool[] calldata shouldWipeClaimableBalance,
         uint256 batchId,
-        bytes[] calldata extraData
+        bytes calldata extraData
     ) external virtual returns (uint256[] memory pendingAmountClaimables);
 
     /**

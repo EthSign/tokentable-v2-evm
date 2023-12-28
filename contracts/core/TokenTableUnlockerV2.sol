@@ -66,7 +66,7 @@ contract TokenTableUnlockerV2 is
         bytes32[] calldata presetIds,
         Preset[] calldata presets,
         uint256 batchId,
-        bytes[] calldata
+        bytes calldata
     ) external virtual override onlyOwner {
         for (uint256 i = 0; i < presetIds.length; i++) {
             _createPreset(presetIds[i], presets[i], batchId);
@@ -79,7 +79,7 @@ contract TokenTableUnlockerV2 is
         Actual[] calldata actuals_,
         uint256[] calldata recipientIds,
         uint256 batchId,
-        bytes[] calldata
+        bytes calldata
     ) external virtual override onlyOwner {
         for (uint256 i = 0; i < recipients.length; i++) {
             _createActual(recipients[i], actuals_[i], recipientIds[i], batchId);
@@ -101,7 +101,7 @@ contract TokenTableUnlockerV2 is
         uint256[] calldata actualIds,
         address[] calldata claimTos,
         uint256 batchId,
-        bytes[] calldata
+        bytes calldata
     ) external virtual override nonReentrant {
         for (uint256 i = 0; i < actualIds.length; i++) {
             if (futureToken.ownerOf(actualIds[i]) != _msgSender()) {
@@ -115,7 +115,7 @@ contract TokenTableUnlockerV2 is
     function delegateClaim(
         uint256[] calldata actualIds,
         uint256 batchId,
-        bytes[] calldata
+        bytes calldata
     ) external virtual override nonReentrant {
         if (_msgSender() != claimingDelegate) revert NotPermissioned();
         for (uint256 i = 0; i < actualIds.length; i++) {
@@ -128,7 +128,7 @@ contract TokenTableUnlockerV2 is
         uint256[] calldata actualIds,
         bool[] calldata shouldWipeClaimableBalance,
         uint256 batchId,
-        bytes[] calldata
+        bytes calldata
     )
         external
         virtual
