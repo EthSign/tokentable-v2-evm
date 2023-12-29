@@ -2,10 +2,9 @@
 pragma solidity ^0.8.20;
 
 import {TokenTableUnlockerV2} from "../../TokenTableUnlockerV2.sol";
-import {TTUV2Gasless} from "../ERC2771/TTUV2Gasless.sol";
 import {Actual} from "../../../interfaces/TokenTableUnlockerV2DataModels.sol";
 
-contract TTUV2Native is TTUV2Gasless {
+contract TTUV2Native is TokenTableUnlockerV2 {
     event DepositReceived(address from, uint256 amount);
 
     receive() external payable {
