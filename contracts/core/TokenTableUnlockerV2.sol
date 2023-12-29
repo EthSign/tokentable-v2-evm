@@ -12,6 +12,10 @@ import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
+// solhint-disable var-name-mixedcase
+// solhint-disable no-inline-assembly
+// solhint-disable const-name-snakecase
+// solhint-disable private-vars-leading-underscore
 contract TokenTableUnlockerV2 is
     OwnableUpgradeable,
     TTUProjectTokenStorage,
@@ -20,23 +24,38 @@ contract TokenTableUnlockerV2 is
 {
     using SafeERC20 for IERC20;
 
+    /// @custom:storage-location erc7201:ethsign.tokentable.TokenTableUnlockerV2
+    struct TokenTableUnlockerV2Storage {
+        ITTUDeployer deployer;
+        ITTFutureTokenV2 futureToken;
+        ITTHook hook;
+        address claimingDelegate;
+        bool isCancelable;
+        bool isHookable;
+        bool isWithdrawable;
+        mapping(bytes32 => Preset) _presets;
+        mapping(uint256 => Actual) actuals;
+        mapping(uint256 => uint256) pendingAmountClaimableForCancelledActuals;
+    }
+
+    // keccak256(abi.encode(uint256(keccak256("ethsign.tokentable.TokenTableUnlockerV2")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 private constant TokenTableUnlockerV2StorageLocation =
+        0xf4418c544e5a1a0f1b27d83456fa5dee959057d761996477014154ff58940400;
+
     uint256 public constant override BIPS_PRECISION = 10 ** 4; // down to 0.01%
     uint256 public constant TOKEN_PRECISION = 10 ** 5;
 
-    ITTUDeployer public override deployer;
-    ITTFutureTokenV2 public override futureToken;
-    ITTHook public override hook;
-    address public override claimingDelegate;
-    bool public override isCancelable;
-    bool public override isHookable;
-    bool public override isWithdrawable;
+    function _getTokenTableUnlockerV2Storage()
+        internal
+        pure
+        returns (TokenTableUnlockerV2Storage storage $)
+    {
+        assembly {
+            $.slot := TokenTableUnlockerV2StorageLocation
+        }
+    }
 
-    mapping(bytes32 => Preset) internal _presets;
-    mapping(uint256 => Actual) public override actuals;
-    mapping(uint256 => uint256)
-        public
-        override pendingAmountClaimableForCancelledActuals;
-
+    // solhint-disable-next-line ordering
     constructor() {
         if (block.chainid != 33133) {
             _disableInitializers();
@@ -51,15 +70,17 @@ contract TokenTableUnlockerV2 is
         bool isHookable_,
         bool isWithdrawable_
     ) external override initializer {
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
         __Ownable_init_unchained(_msgSender());
         _initializeSE(projectToken);
-        futureToken = ITTFutureTokenV2(futureToken_);
-        deployer = ITTUDeployer(deployer_);
+        $.futureToken = ITTFutureTokenV2(futureToken_);
+        $.deployer = ITTUDeployer(deployer_);
         __ReentrancyGuard_init_unchained();
-        claimingDelegate = owner();
-        isCancelable = isCancelable_;
-        isHookable = isHookable_;
-        isWithdrawable = isWithdrawable_;
+        $.claimingDelegate = owner();
+        $.isCancelable = isCancelable_;
+        $.isHookable = isHookable_;
+        $.isWithdrawable = isWithdrawable_;
     }
 
     // solhint-disable-next-line ordering
@@ -92,7 +113,9 @@ contract TokenTableUnlockerV2 is
         uint256 amount,
         bytes calldata
     ) external virtual override onlyOwner {
-        if (!isWithdrawable) revert NotPermissioned();
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
+        if (!$.isWithdrawable) revert NotPermissioned();
         IERC20(getProjectToken()).safeTransfer(_msgSender(), amount);
         emit TokensWithdrawn(_msgSender(), amount);
         _callHook(TokenTableUnlockerV2.withdrawDeposit.selector, _msgData());
@@ -104,8 +127,10 @@ contract TokenTableUnlockerV2 is
         uint256 batchId,
         bytes calldata
     ) external virtual override nonReentrant {
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
         for (uint256 i = 0; i < actualIds.length; i++) {
-            if (futureToken.ownerOf(actualIds[i]) != _msgSender()) {
+            if ($.futureToken.ownerOf(actualIds[i]) != _msgSender()) {
                 revert NotPermissioned();
             }
             _claim(actualIds[i], claimTos[i], batchId);
@@ -118,7 +143,9 @@ contract TokenTableUnlockerV2 is
         uint256 batchId,
         bytes calldata
     ) external virtual override nonReentrant {
-        if (_msgSender() != claimingDelegate) revert NotPermissioned();
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
+        if (_msgSender() != $.claimingDelegate) revert NotPermissioned();
         for (uint256 i = 0; i < actualIds.length; i++) {
             _claim(actualIds[i], address(0), batchId);
         }
@@ -137,7 +164,9 @@ contract TokenTableUnlockerV2 is
         onlyOwner
         returns (uint256[] memory pendingAmountClaimables)
     {
-        if (!isCancelable) revert NotPermissioned();
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
+        if (!$.isCancelable) revert NotPermissioned();
         pendingAmountClaimables = new uint256[](actualIds.length);
         for (uint256 i = 0; i < actualIds.length; i++) {
             uint256 actualId = actualIds[i];
@@ -145,7 +174,7 @@ contract TokenTableUnlockerV2 is
                 actualId
             );
             if (!shouldWipeClaimableBalance[i]) {
-                pendingAmountClaimableForCancelledActuals[
+                $.pendingAmountClaimableForCancelledActuals[
                     actualId
                 ] += deltaAmountClaimable;
             }
@@ -156,39 +185,49 @@ contract TokenTableUnlockerV2 is
                 shouldWipeClaimableBalance[i],
                 batchId
             );
-            delete actuals[actualId];
+            delete $.actuals[actualId];
         }
         _callHook(TokenTableUnlockerV2.cancel.selector, _msgData());
     }
 
     function setHook(ITTHook hook_) external virtual override onlyOwner {
-        if (!isHookable) revert NotPermissioned();
-        hook = hook_;
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
+        if (!$.isHookable) revert NotPermissioned();
+        $.hook = hook_;
         _callHook(TokenTableUnlockerV2.setHook.selector, _msgData());
     }
 
     function setClaimingDelegate(
         address delegate
     ) external virtual override onlyOwner {
-        claimingDelegate = delegate;
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
+        $.claimingDelegate = delegate;
         emit ClaimingDelegateSet(delegate);
     }
 
     function disableCancel() external virtual override onlyOwner {
-        isCancelable = false;
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
+        $.isCancelable = false;
         emit CancelDisabled();
         _callHook(TokenTableUnlockerV2.disableCancel.selector, _msgData());
     }
 
     function disableHook() external virtual override onlyOwner {
-        isHookable = false;
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
+        $.isHookable = false;
         emit HookDisabled();
         _callHook(TokenTableUnlockerV2.disableHook.selector, _msgData());
-        hook = ITTHook(address(0));
+        $.hook = ITTHook(address(0));
     }
 
     function disableWithdraw() external virtual override onlyOwner {
-        isWithdrawable = false;
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
+        $.isWithdrawable = false;
         emit WithdrawDisabled();
         _callHook(TokenTableUnlockerV2.disableWithdraw.selector, _msgData());
     }
@@ -196,8 +235,10 @@ contract TokenTableUnlockerV2 is
     function transferOwnership(
         address newOwner
     ) public override(IOwnable, OwnableUpgradeable) {
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
         OwnableUpgradeable.transferOwnership(newOwner);
-        claimingDelegate = newOwner;
+        $.claimingDelegate = newOwner;
         emit ClaimingDelegateSet(newOwner);
     }
 
@@ -219,10 +260,12 @@ contract TokenTableUnlockerV2 is
         Preset memory preset,
         uint256 batchId
     ) internal virtual {
-        if (!_presetIsEmpty(_presets[presetId])) revert PresetExists();
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
+        if (!_presetIsEmpty($._presets[presetId])) revert PresetExists();
         if (!_presetHasValidFormat(preset) || presetId == 0)
             revert InvalidPresetFormat();
-        _presets[presetId] = preset;
+        $._presets[presetId] = preset;
         emit PresetCreated(presetId, batchId);
     }
 
@@ -232,12 +275,14 @@ contract TokenTableUnlockerV2 is
         uint256 recipientId,
         uint256 batchId
     ) internal virtual {
-        uint256 actualId = futureToken.safeMint(recipient);
-        Preset storage preset = _presets[actual.presetId];
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
+        uint256 actualId = $.futureToken.safeMint(recipient);
+        Preset storage preset = $._presets[actual.presetId];
         if (_presetIsEmpty(preset)) revert PresetDoesNotExist();
         if (actual.amountClaimed >= actual.totalAmount)
             revert InvalidSkipAmount();
-        actuals[actualId] = actual;
+        $.actuals[actualId] = actual;
         emit ActualCreated(
             actual.presetId,
             actualId,
@@ -252,18 +297,20 @@ contract TokenTableUnlockerV2 is
         address overrideRecipient,
         uint256 batchId
     ) internal virtual {
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
         uint256 deltaAmountClaimable;
         address recipient;
         if (overrideRecipient == address(0)) {
-            recipient = futureToken.ownerOf(actualId);
+            recipient = $.futureToken.ownerOf(actualId);
         } else {
             recipient = overrideRecipient;
         }
-        deltaAmountClaimable = pendingAmountClaimableForCancelledActuals[
+        deltaAmountClaimable = $.pendingAmountClaimableForCancelledActuals[
             actualId
         ];
         if (deltaAmountClaimable != 0) {
-            pendingAmountClaimableForCancelledActuals[actualId] = 0;
+            $.pendingAmountClaimableForCancelledActuals[actualId] = 0;
             IERC20(getProjectToken()).safeTransfer(
                 recipient,
                 deltaAmountClaimable
@@ -286,15 +333,80 @@ contract TokenTableUnlockerV2 is
         bytes4 selector,
         bytes calldata context
     ) internal virtual {
-        if (address(hook) == address(0)) return;
-        hook.didCall(selector, context, _msgSender());
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
+        if (address($.hook) == address(0)) return;
+        $.hook.didCall(selector, context, _msgSender());
     }
 
-    // solhint-disable-next-line ordering
+    function deployer() external view virtual override returns (ITTUDeployer) {
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
+        return $.deployer;
+    }
+
+    function futureToken()
+        external
+        view
+        virtual
+        override
+        returns (ITTFutureTokenV2)
+    {
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
+        return $.futureToken;
+    }
+
+    function hook() external view virtual override returns (ITTHook) {
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
+        return $.hook;
+    }
+
+    function claimingDelegate()
+        external
+        view
+        virtual
+        override
+        returns (address)
+    {
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
+        return $.claimingDelegate;
+    }
+
+    function isCancelable() external view virtual override returns (bool) {
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
+        return $.isCancelable;
+    }
+
+    function isHookable() external view virtual override returns (bool) {
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
+        return $.isHookable;
+    }
+
+    function isWithdrawable() external view virtual override returns (bool) {
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
+        return $.isWithdrawable;
+    }
+
+    function pendingAmountClaimableForCancelledActuals(
+        uint256 actualId
+    ) external view virtual override returns (uint256) {
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
+        return $.pendingAmountClaimableForCancelledActuals[actualId];
+    }
+
     function getEncodedPreset(
         bytes32 presetId
     ) external view virtual override returns (bytes memory) {
-        Preset memory preset = _presets[presetId];
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
+        Preset memory preset = $._presets[presetId];
         return
             abi.encode(
                 preset.linearStartTimestampsRelative,
@@ -305,8 +417,16 @@ contract TokenTableUnlockerV2 is
             );
     }
 
+    function actuals(
+        uint256 actualId
+    ) external view virtual override returns (Actual memory) {
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
+        return $.actuals[actualId];
+    }
+
     function version() external pure returns (string memory) {
-        return "2.5.4";
+        return "2.5.5";
     }
 
     function calculateAmountClaimable(
@@ -334,9 +454,11 @@ contract TokenTableUnlockerV2 is
         override
         returns (uint256 deltaAmountClaimable, uint256 updatedAmountClaimed)
     {
-        Actual memory actual = actuals[actualId];
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
+        Actual memory actual = $.actuals[actualId];
         if (actual.presetId == 0) revert ActualDoesNotExist();
-        Preset memory preset = _presets[actual.presetId];
+        Preset memory preset = $._presets[actual.presetId];
         uint256 timePrecisionDecimals = preset.stream ? 10 ** 5 : 1;
         uint256 i;
         uint256 latestIncompleteLinearIndex;
@@ -417,11 +539,13 @@ contract TokenTableUnlockerV2 is
         uint256 actualId,
         address recipient
     ) internal virtual returns (uint256 deltaAmountClaimable_) {
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
         (
             uint256 deltaAmountClaimable,
             uint256 updatedAmountClaimed
         ) = calculateAmountClaimable(actualId);
-        Actual storage actual = actuals[actualId];
+        Actual storage actual = $.actuals[actualId];
         actual.amountClaimed = updatedAmountClaimed;
         IERC20(getProjectToken()).safeTransfer(recipient, deltaAmountClaimable);
         deltaAmountClaimable_ = deltaAmountClaimable;
@@ -430,17 +554,19 @@ contract TokenTableUnlockerV2 is
     function _chargeFees(
         uint256 amount
     ) internal virtual returns (uint256 feesCollected) {
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
         if (
-            address(deployer) != address(0) &&
-            address(deployer.feeCollector()) != address(0)
+            address($.deployer) != address(0) &&
+            address($.deployer.feeCollector()) != address(0)
         ) {
-            feesCollected = deployer.feeCollector().getFee(
+            feesCollected = $.deployer.feeCollector().getFee(
                 address(this),
                 amount
             );
             if (feesCollected > 0) {
                 IERC20(getProjectToken()).safeTransfer(
-                    deployer.feeCollector().owner(),
+                    $.deployer.feeCollector().owner(),
                     feesCollected
                 );
             }

@@ -18,13 +18,33 @@ import {ITokenTableUnlockerV2} from "../interfaces/ITokenTableUnlockerV2.sol";
  * claimable amount can be determined by calling
  * TokenTableUnlockerV2.calculateAmountClaimable(uint256 actualId)
  */
+// solhint-disable var-name-mixedcase
+// solhint-disable no-inline-assembly
+// solhint-disable const-name-snakecase
+// solhint-disable private-vars-leading-underscore
 contract TTFutureTokenV2 is ITTFutureTokenV2, ERC721AQueryableUpgradeable {
-    address public authorizedMinter;
-    bool public isTransferable;
+    /// @custom:storage-location erc7201:ethsign.tokentable.TTFutureTokenV2
+    struct TTFutureTokenV2Storage {
+        address authorizedMinter;
+        bool isTransferable;
+        string baseUri;
+    }
 
-    // v2.0.1
-    string public baseUri;
+    // keccak256(abi.encode(uint256(keccak256("ethsign.tokentable.TTFutureTokenV2")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 private constant TTFutureTokenV2StorageLocation =
+        0xb50f0509372e72ec7790b055b09e294ca3549f94c48d078a7ee9a7b36fac3600;
 
+    function _getTTFutureTokenV2Storage()
+        internal
+        pure
+        returns (TTFutureTokenV2Storage storage $)
+    {
+        assembly {
+            $.slot := TTFutureTokenV2StorageLocation
+        }
+    }
+
+    // solhint-disable-next-line ordering
     constructor() {
         if (block.chainid != 33133) {
             _dummyInitialize();
@@ -38,11 +58,12 @@ contract TTFutureTokenV2 is ITTFutureTokenV2, ERC721AQueryableUpgradeable {
         address projectToken,
         bool isTransferable_
     ) external override initializerERC721A {
+        TTFutureTokenV2Storage storage $ = _getTTFutureTokenV2Storage();
         __ERC721A_init_unchained(
             string.concat("Future ", IERC20Metadata(projectToken).name()),
             string.concat("FT-", IERC20Metadata(projectToken).symbol())
         );
-        isTransferable = isTransferable_;
+        $.isTransferable = isTransferable_;
     }
 
     /**
@@ -55,8 +76,9 @@ contract TTFutureTokenV2 is ITTFutureTokenV2, ERC721AQueryableUpgradeable {
     function setAuthorizedMinterSingleUse(
         address authorizedMinter_
     ) external override {
-        if (authorizedMinter != address(0)) revert NotPermissioned();
-        authorizedMinter = authorizedMinter_;
+        TTFutureTokenV2Storage storage $ = _getTTFutureTokenV2Storage();
+        if ($.authorizedMinter != address(0)) revert NotPermissioned();
+        $.authorizedMinter = authorizedMinter_;
     }
 
     /**
@@ -65,7 +87,8 @@ contract TTFutureTokenV2 is ITTFutureTokenV2, ERC721AQueryableUpgradeable {
      * token with tokenId == actualId is minted.
      */
     function safeMint(address to) external override returns (uint256 tokenId) {
-        if (_msgSenderERC721A() != authorizedMinter) revert NotPermissioned();
+        TTFutureTokenV2Storage storage $ = _getTTFutureTokenV2Storage();
+        if (_msgSenderERC721A() != $.authorizedMinter) revert NotPermissioned();
         tokenId = _nextTokenId();
         _safeMint(to, 1);
     }
@@ -78,7 +101,8 @@ contract TTFutureTokenV2 is ITTFutureTokenV2, ERC721AQueryableUpgradeable {
         address to,
         uint256 tokenId
     ) public payable virtual override(ERC721AUpgradeable, IERC721AUpgradeable) {
-        if (!isTransferable) revert NotPermissioned();
+        TTFutureTokenV2Storage storage $ = _getTTFutureTokenV2Storage();
+        if (!$.isTransferable) revert NotPermissioned();
         super.transferFrom(from, to, tokenId);
     }
 
@@ -91,16 +115,18 @@ contract TTFutureTokenV2 is ITTFutureTokenV2, ERC721AQueryableUpgradeable {
         uint256 tokenId,
         bytes memory _data
     ) public payable virtual override(ERC721AUpgradeable, IERC721AUpgradeable) {
-        if (!isTransferable) revert NotPermissioned();
+        TTFutureTokenV2Storage storage $ = _getTTFutureTokenV2Storage();
+        if (!$.isTransferable) revert NotPermissioned();
         super.safeTransferFrom(from, to, tokenId, _data);
     }
 
     function setURI(string calldata uri) external {
+        TTFutureTokenV2Storage storage $ = _getTTFutureTokenV2Storage();
         if (
             _msgSenderERC721A() !=
-            ITokenTableUnlockerV2(authorizedMinter).owner()
+            ITokenTableUnlockerV2($.authorizedMinter).owner()
         ) revert NotPermissioned();
-        baseUri = uri;
+        $.baseUri = uri;
         emit DidSetBaseURI(uri);
     }
 
@@ -123,22 +149,24 @@ contract TTFutureTokenV2 is ITTFutureTokenV2, ERC721AQueryableUpgradeable {
             bool isCancelable
         )
     {
+        TTFutureTokenV2Storage storage $ = _getTTFutureTokenV2Storage();
         (
             uint256 deltaAmountClaimable_,
             uint256 updatedAmountClaimed_
-        ) = ITokenTableUnlockerV2(authorizedMinter).calculateAmountClaimable(
+        ) = ITokenTableUnlockerV2($.authorizedMinter).calculateAmountClaimable(
                 tokenId
             );
         deltaAmountClaimable = deltaAmountClaimable_;
         amountAlreadyClaimed = updatedAmountClaimed_ - deltaAmountClaimable_;
-        isCancelable = ITokenTableUnlockerV2(authorizedMinter).isCancelable();
+        isCancelable = ITokenTableUnlockerV2($.authorizedMinter).isCancelable();
     }
 
     function version() external pure override returns (string memory) {
-        return "2.5.0";
+        return "2.5.5";
     }
 
     function _baseURI() internal view virtual override returns (string memory) {
-        return baseUri;
+        TTFutureTokenV2Storage storage $ = _getTTFutureTokenV2Storage();
+        return $.baseUri;
     }
 }

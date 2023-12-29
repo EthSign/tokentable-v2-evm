@@ -19,7 +19,7 @@ import {
 } from '../typechain-types'
 import {HardhatEthersSigner} from '@nomicfoundation/hardhat-ethers/signers'
 import {id, ZeroAddress, AbiCoder, encodeBytes32String} from 'ethers'
-import {time, mine} from '@nomicfoundation/hardhat-network-helpers'
+import {mine} from '@nomicfoundation/hardhat-network-helpers'
 import {setNextBlockTimestamp} from '@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time'
 
 chai.use(chaiAsPromised)
@@ -35,13 +35,20 @@ const calculateAmountOfTokensToClaimAtTimestamp = (
     linearBips: bigint[],
     numOfUnlocksForEachLinear: bigint[],
     bipsPrecision: bigint,
-    totalAmount: bigint
+    totalAmount: bigint,
+    amountClaimed: bigint
 ): bigint => {
     const precisionDecimals = 10n ** 10n
     let claimableBips = 0n
     const claimTimestampRelative =
         claimTimestampAbsolute - startTimestampAbsolute
     let latestIncompleteLinearIndex = 0
+    if (
+        claimTimestampAbsolute <
+        startTimestampAbsolute + linearStartTimestampsRelative[0]
+    ) {
+        return amountClaimed
+    }
     let k
     for (k = 0; k < linearStartTimestampsRelative.length; k++) {
         if (linearStartTimestampsRelative[k] <= claimTimestampRelative) {
@@ -95,8 +102,12 @@ const calculateAmountOfTokensToClaimAtTimestamp = (
     if (claimableBips > bipsPrecision * precisionDecimals) {
         claimableBips = bipsPrecision * precisionDecimals
     }
-
-    return (claimableBips * totalAmount) / bipsPrecision / precisionDecimals
+    let updatedAmountClaimed =
+        (claimableBips * totalAmount) / bipsPrecision / precisionDecimals
+    if (amountClaimed > updatedAmountClaimed) {
+        updatedAmountClaimed = amountClaimed
+    }
+    return updatedAmountClaimed
 }
 
 describe('V2', () => {
@@ -241,7 +252,7 @@ describe('V2', () => {
                         0,
                         '0x'
                     )
-                ).to.be.revertedWithCustomError(unlocker, 'InvalidPresetFormat')
+                ).to.be.revertedWithCustomError(unlocker, 'PresetDoesNotExist')
                 await expect(
                     unlocker.connect(founder).createActuals(
                         [investor.address],
@@ -342,12 +353,11 @@ describe('V2', () => {
                     timeSkipped: bigint,
                     actualId: bigint
                 ) => {
-                    await time.setNextBlockTimestamp(
-                        startTimestampAbsolute + timeSkipped
-                    )
-                    await mine()
                     const onchainResult =
-                        await unlocker.calculateAmountClaimable(actualId)
+                        await unlocker.simulateAmountClaimable(
+                            actualId,
+                            startTimestampAbsolute + timeSkipped
+                        )
                     const offchainResult =
                         calculateAmountOfTokensToClaimAtTimestamp(
                             startTimestampAbsolute,
@@ -357,7 +367,8 @@ describe('V2', () => {
                             linearBips,
                             numOfUnlocksForEachLinear,
                             BIPS_PRECISION,
-                            totalAmount
+                            totalAmount,
+                            (await unlocker.actuals(actualId)).amountClaimed
                         )
                     expect(onchainResult.updatedAmountClaimed).to.equal(
                         offchainResult
@@ -512,7 +523,8 @@ describe('V2', () => {
                         linearBips,
                         numOfUnlocksForEachLinear,
                         BIPS_PRECISION,
-                        totalAmount
+                        totalAmount,
+                        0n
                     )
                 amountClaimed += deltaAmountClaimable
                 await expect(
@@ -560,7 +572,8 @@ describe('V2', () => {
                         linearBips,
                         numOfUnlocksForEachLinear,
                         BIPS_PRECISION,
-                        totalAmount
+                        totalAmount,
+                        0n
                     ) - amountClaimed
                 amountClaimed += deltaAmountClaimable
                 balanceBefore = await projectToken.balanceOf(investor.address)
@@ -596,7 +609,8 @@ describe('V2', () => {
                         linearBips,
                         numOfUnlocksForEachLinear,
                         BIPS_PRECISION,
-                        totalAmount
+                        totalAmount,
+                        0n
                     ) - amountClaimed
                 amountClaimed += deltaAmountClaimable
                 balanceBefore = await projectToken.balanceOf(investor.address)
@@ -632,7 +646,8 @@ describe('V2', () => {
                         linearBips,
                         numOfUnlocksForEachLinear,
                         BIPS_PRECISION,
-                        totalAmount
+                        totalAmount,
+                        0n
                     ) - amountClaimed
                 amountClaimed += deltaAmountClaimable
                 balanceBefore = await projectToken.balanceOf(investor.address)
@@ -703,7 +718,8 @@ describe('V2', () => {
                         linearBips,
                         numOfUnlocksForEachLinear,
                         BIPS_PRECISION,
-                        totalAmount
+                        totalAmount,
+                        0n
                     )
                 await unlocker
                     .connect(investor)
@@ -722,7 +738,8 @@ describe('V2', () => {
                         linearBips,
                         numOfUnlocksForEachLinear,
                         BIPS_PRECISION,
-                        totalAmount
+                        totalAmount,
+                        0n
                     ) - amountSentToInvestor
                 const cancelTx = await unlocker
                     .connect(founder)

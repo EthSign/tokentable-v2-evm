@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {TokenTableUnlockerV2} from "../../TokenTableUnlockerV2.sol";
 import {Actual} from "../../../interfaces/TokenTableUnlockerV2DataModels.sol";
 
+// solhint-disable var-name-mixedcase
 contract TTUV2Native is TokenTableUnlockerV2 {
     event DepositReceived(address from, uint256 amount);
 
@@ -15,7 +16,9 @@ contract TTUV2Native is TokenTableUnlockerV2 {
         uint256 amount,
         bytes calldata
     ) external virtual override onlyOwner {
-        if (!isWithdrawable) revert NotPermissioned();
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
+        if (!$.isWithdrawable) revert NotPermissioned();
         //IERC20(getProjectToken()).safeTransfer(_msgSender(), amount);
         (bool sent, bytes memory data) = payable(_msgSender()).call{
             value: amount
@@ -30,18 +33,20 @@ contract TTUV2Native is TokenTableUnlockerV2 {
         address overrideRecipient,
         uint256 batchId
     ) internal virtual override {
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
         uint256 deltaAmountClaimable;
         address recipient;
         if (overrideRecipient == address(0)) {
-            recipient = futureToken.ownerOf(actualId);
+            recipient = $.futureToken.ownerOf(actualId);
         } else {
             recipient = overrideRecipient;
         }
-        deltaAmountClaimable = pendingAmountClaimableForCancelledActuals[
+        deltaAmountClaimable = $.pendingAmountClaimableForCancelledActuals[
             actualId
         ];
         if (deltaAmountClaimable != 0) {
-            pendingAmountClaimableForCancelledActuals[actualId] = 0;
+            $.pendingAmountClaimableForCancelledActuals[actualId] = 0;
             // IERC20(getProjectToken()).safeTransfer(
             //     recipient,
             //     deltaAmountClaimable
@@ -68,11 +73,13 @@ contract TTUV2Native is TokenTableUnlockerV2 {
         uint256 actualId,
         address recipient
     ) internal virtual override returns (uint256 deltaAmountClaimable_) {
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
         (
             uint256 deltaAmountClaimable,
             uint256 updatedAmountClaimed
         ) = calculateAmountClaimable(actualId);
-        Actual storage actual = actuals[actualId];
+        Actual storage actual = $.actuals[actualId];
         actual.amountClaimed = updatedAmountClaimed;
         // IERC20(getProjectToken()).safeTransfer(recipient, deltaAmountClaimable);
         (bool sent, bytes memory data) = payable(recipient).call{
