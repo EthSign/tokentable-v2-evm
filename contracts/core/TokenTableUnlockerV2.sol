@@ -362,7 +362,7 @@ contract TokenTableUnlockerV2 is
             updatedAmountClaimed += preset.linearBips[i] * TOKEN_PRECISION;
         }
         // 2. calculate incomplete linear index claimable in bips
-        uint256 latestIncompleteLinearDuration = 0;
+        uint256 latestIncompleteLinearDuration;
         if (
             latestIncompleteLinearIndex ==
             preset.linearStartTimestampsRelative.length - 1
