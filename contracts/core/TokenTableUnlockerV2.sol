@@ -21,6 +21,7 @@ contract TokenTableUnlockerV2 is
     using SafeERC20 for IERC20;
 
     uint256 public constant override BIPS_PRECISION = 10 ** 4; // down to 0.01%
+    uint256 public constant TOKEN_PRECISION = 10 ** 5;
 
     ITTUDeployer public override deployer;
     ITTFutureTokenV2 public override futureToken;
@@ -333,7 +334,6 @@ contract TokenTableUnlockerV2 is
         override
         returns (uint256 deltaAmountClaimable, uint256 updatedAmountClaimed)
     {
-        uint256 tokenPrecisionDecimals = 10 ** 5;
         Actual memory actual = actuals[actualId];
         if (actual.presetId == 0) revert PresetDoesNotExist();
         Preset memory preset = _presets[actual.presetId];
@@ -359,9 +359,7 @@ contract TokenTableUnlockerV2 is
         }
         // 1. calculate completed linear index claimables in bips
         for (i = 0; i < latestIncompleteLinearIndex; i++) {
-            updatedAmountClaimed +=
-                preset.linearBips[i] *
-                tokenPrecisionDecimals;
+            updatedAmountClaimed += preset.linearBips[i] * TOKEN_PRECISION;
         }
         // 2. calculate incomplete linear index claimable in bips
         uint256 latestIncompleteLinearDuration = 0;
@@ -396,14 +394,14 @@ contract TokenTableUnlockerV2 is
                 latestIncompleteLinearIntervalForEachUnlock;
         updatedAmountClaimed +=
             (preset.linearBips[latestIncompleteLinearIndex] *
-                tokenPrecisionDecimals *
+                TOKEN_PRECISION *
                 numOfClaimableUnlocksInIncompleteLinear) /
             preset.numOfUnlocksForEachLinear[latestIncompleteLinearIndex] /
             timePrecisionDecimals;
         updatedAmountClaimed =
             (updatedAmountClaimed * actual.totalAmount) /
             BIPS_PRECISION /
-            tokenPrecisionDecimals;
+            TOKEN_PRECISION;
         if (updatedAmountClaimed > actual.totalAmount) {
             updatedAmountClaimed = actual.totalAmount;
         }
