@@ -234,7 +234,7 @@ contract TokenTableUnlockerV2 is
     ) internal virtual {
         uint256 actualId = futureToken.safeMint(recipient);
         Preset storage preset = _presets[actual.presetId];
-        if (_presetIsEmpty(preset)) revert InvalidPresetFormat();
+        if (_presetIsEmpty(preset)) revert PresetDoesNotExist();
         if (actual.amountClaimed >= actual.totalAmount)
             revert InvalidSkipAmount();
         actuals[actualId] = actual;
@@ -335,7 +335,7 @@ contract TokenTableUnlockerV2 is
         returns (uint256 deltaAmountClaimable, uint256 updatedAmountClaimed)
     {
         Actual memory actual = actuals[actualId];
-        if (actual.presetId == 0) revert PresetDoesNotExist();
+        if (actual.presetId == 0) revert ActualDoesNotExist();
         Preset memory preset = _presets[actual.presetId];
         uint256 timePrecisionDecimals = preset.stream ? 10 ** 5 : 1;
         uint256 i;

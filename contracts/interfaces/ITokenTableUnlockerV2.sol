@@ -55,6 +55,10 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
      */
     error PresetDoesNotExist();
     /**
+     * @dev 06aed31663
+     */
+    error ActualDoesNotExist();
+    /**
      * @dev 0x78c0fc43
      */
     error InvalidSkipAmount();
