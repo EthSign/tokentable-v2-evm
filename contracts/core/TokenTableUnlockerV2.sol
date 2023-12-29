@@ -85,7 +85,7 @@ contract TokenTableUnlockerV2 is
         for (uint256 i = 0; i < recipients.length; i++) {
             _createActual(recipients[i], actuals_[i], recipientIds[i], batchId);
         }
-        _callHook(this.createActuals.selector, _msgData());
+        _callHook(TokenTableUnlockerV2.createActuals.selector, _msgData());
     }
 
     function withdrawDeposit(
