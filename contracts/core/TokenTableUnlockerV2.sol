@@ -407,6 +407,7 @@ contract TokenTableUnlockerV2 is
         }
         if (actual.amountClaimed > updatedAmountClaimed) {
             deltaAmountClaimable = 0;
+            updatedAmountClaimed = actual.amountClaimed;
         } else {
             deltaAmountClaimable = updatedAmountClaimed - actual.amountClaimed;
         }
