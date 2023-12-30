@@ -33,7 +33,7 @@ contract KYCHook is ITTHook, Ownable, IVersionable {
     mapping(uint256 => mapping(address => bool))
         public acceptedSchemasAndAttesters;
 
-    event KYCProcessed(string applicantId, address applicantAddress);
+    event KYCProcessed(string applicantId, address applicant);
 
     error KYCFailed();
 
