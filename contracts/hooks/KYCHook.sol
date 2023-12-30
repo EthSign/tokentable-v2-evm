@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {ITTHook} from "../interfaces/ITTHook.sol";
 import {ITokenTableUnlockerV2} from "../interfaces/ITokenTableUnlockerV2.sol";
 import {IVersionable} from "../interfaces/IVersionable.sol";
+import {ITTFutureTokenV2} from "../interfaces/ITTFutureTokenV2.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 // @dev https://github.com/EthSign/sign-protocol-evm/blob/main/src/models/Attestation.sol
@@ -71,14 +72,18 @@ contract KYCHook is ITTHook, Ownable, IVersionable {
                 (uint256[], address[], uint256, bytes)
             );
             KYCData memory kycData = abi.decode(extraData, (KYCData));
-            _checkKYC(kycData, caller);
+            _checkKYC(kycData, caller); // In this case, the recipient (applicant) is the caller of Unlocker
         } else if (selector == ITokenTableUnlockerV2.delegateClaim.selector) {
-            (, , bytes memory extraData) = abi.decode(
+            (uint256[] memory actualIds, , bytes memory extraData) = abi.decode(
                 context[4:],
                 (uint256[], uint256, bytes)
             );
+            if (actualIds.length != 1) revert KYCFailed(); // The backend will only delegate claim 1 user at a time
+            address applicant = ITTFutureTokenV2(
+                ITokenTableUnlockerV2(_msgSender()).futureToken()
+            ).ownerOf(actualIds[0]); // In this case, the caller of Unlocker is the backend, so we need to find the Actual recipient
             KYCData memory kycData = abi.decode(extraData, (KYCData));
-            _checkKYC(kycData, caller);
+            _checkKYC(kycData, applicant);
         }
     }
 
@@ -86,7 +91,7 @@ contract KYCHook is ITTHook, Ownable, IVersionable {
         return "1.0.0-zetachain-airdrop";
     }
 
-    function _checkKYC(KYCData memory kycData, address caller) internal {
+    function _checkKYC(KYCData memory kycData, address applicant) internal {
         Attestation memory attestation = isp.getAttestation(
             kycData.attestationId
         );
@@ -97,7 +102,7 @@ contract KYCHook is ITTHook, Ownable, IVersionable {
             attestation.revoked ||
             (attestation.validUntil < block.timestamp &&
                 attestation.validUntil > 0) ||
-            kycData.applicant != caller
+            kycData.applicant != applicant
         ) {
             revert KYCFailed();
         }
