@@ -55,7 +55,7 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
      */
     error PresetDoesNotExist();
     /**
-     * @dev 06aed31663
+     * @dev 0x06aed316
      */
     error ActualDoesNotExist();
     /**

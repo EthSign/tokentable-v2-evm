@@ -6,6 +6,7 @@ import {ITokenTableUnlockerV2} from "../interfaces/ITokenTableUnlockerV2.sol";
 import {IVersionable} from "../interfaces/IVersionable.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
+// @dev https://github.com/EthSign/sign-protocol-evm/blob/main/src/models/Attestation.sol
 struct Attestation {
     uint256 schemaId;
     uint256 linkedAttestationId;
@@ -16,18 +17,25 @@ struct Attestation {
     bytes data;
 }
 
+// @dev This is encoded as `bytes extraData`.
 struct KYCData {
     uint256 attestationId;
     string applicantId;
     address applicant;
 }
 
+// @dev https://github.com/EthSign/sign-protocol-evm/blob/main/src/interfaces/ISP.sol
 interface ISP {
     function getAttestation(
         uint256 attestationId
     ) external view returns (Attestation memory);
 }
 
+/**
+ * @title KYCHook
+ * @author Jack Xu @ EthSign
+ * @dev On-chain KYC verifier for ZetaChain native airdrop.
+ */
 contract KYCHook is ITTHook, Ownable, IVersionable {
     ISP public immutable isp;
     mapping(uint256 => mapping(address => bool))
@@ -35,6 +43,9 @@ contract KYCHook is ITTHook, Ownable, IVersionable {
 
     event KYCProcessed(string applicantId, address applicant);
 
+    /**
+     * @dev 0x745b5bfd
+     */
     error KYCFailed();
 
     constructor(ISP isp_) Ownable(_msgSender()) {
