@@ -5,7 +5,6 @@ import {ITTHook} from "../interfaces/ITTHook.sol";
 import {ITokenTableUnlockerV2} from "../interfaces/ITokenTableUnlockerV2.sol";
 import {IVersionable} from "../interfaces/IVersionable.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 struct Attestation {
     uint256 schemaId;
@@ -30,8 +29,6 @@ interface ISP {
 }
 
 contract KYCHook is ITTHook, Ownable, IVersionable {
-    using Strings for string;
-
     ISP public immutable isp;
     mapping(uint256 => mapping(address => bool))
         public acceptedSchemasAndAttesters;
