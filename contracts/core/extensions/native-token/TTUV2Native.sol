@@ -25,7 +25,7 @@ contract TTUV2Native is TokenTableUnlockerV2 {
         }("");
         require(sent, string(data));
         emit TokensWithdrawn(_msgSender(), amount);
-        _callHook(TokenTableUnlockerV2.withdrawDeposit.selector, _msgData());
+        _callHook(_msgData());
     }
 
     function _claim(
