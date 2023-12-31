@@ -15,7 +15,8 @@ import {
     TTFutureTokenV2,
     TTUDeployerLite,
     TTUV2BeaconManager,
-    TTTrackerTokenV2
+    TTTrackerTokenV2,
+    MockHook
 } from '../typechain-types'
 import {HardhatEthersSigner} from '@nomicfoundation/hardhat-ethers/signers'
 import {id, ZeroAddress, AbiCoder, encodeBytes32String} from 'ethers'
@@ -793,7 +794,7 @@ describe('V2', () => {
              */
         })
 
-        describe('trackerToken', () => {
+        describe('TrackerToken', () => {
             it('should reflect the correct claimable amount', async () => {
                 const TrackerFactory =
                     await ethers.getContractFactory('TTTrackerTokenV2')
@@ -1160,6 +1161,66 @@ describe('V2', () => {
                     '0x'
                 )
                 await futureToken2.tokensOfOwner(investor.address)
+            })
+        })
+
+        describe('Hook', () => {
+            let mockHook: MockHook
+
+            beforeEach(async () => {
+                mockHook = await (
+                    await ethers.getContractFactory('MockHook')
+                ).deploy()
+            })
+
+            it('should decode data properly and emit mock event', async () => {
+                await unlocker
+                    .connect(founder)
+                    .setHook(await mockHook.getAddress())
+                await unlocker
+                    .connect(founder)
+                    .createPresets([presetId], [preset], 0, '0x')
+                await unlocker.connect(founder).createActuals(
+                    [investor.address],
+                    [
+                        {
+                            presetId,
+                            startTimestampAbsolute,
+                            amountClaimed: amountSkipped,
+                            totalAmount
+                        }
+                    ],
+                    [0],
+                    0,
+                    '0x'
+                )
+                await projectToken
+                    .connect(founder)
+                    .transfer(await unlocker.getAddress(), amountDepositingNow)
+                const actualId = (
+                    await futureToken.tokensOfOwner(investor.address)
+                )[0]
+                const batchId = Math.floor(Math.random() * 100)
+                const attestationId = Math.floor(Math.random() * 100)
+                const applicantId = 'Test Applicant ID'
+                const applicant = investor.address
+                const tx = await unlocker.connect(founder).delegateClaim(
+                    [actualId],
+                    batchId,
+                    AbiCoder.defaultAbiCoder().encode(
+                        ['tuple(uint256,string,address)'],
+                        [
+                            Object.values({
+                                attestationId,
+                                applicantId,
+                                applicant
+                            })
+                        ]
+                    )
+                )
+                await expect(tx)
+                    .to.emit(mockHook, 'MockHookDelegateClaim')
+                    .withArgs(actualId, batchId, applicantId, applicant)
             })
         })
     })
