@@ -9,13 +9,11 @@ interface ITTHook {
     /**
      * @notice Forwards the call context from the hooked contract.
      * @dev Reverts within hooks will revert the hooked contract as well.
-     * @param selector The selector of the called function.
-     * @param context Encoded data from the called function.
-     * @param caller The caller of the hooked contract.
+     * @param originalMsgData Forwarded calldata from the called function.
+     * @param originalMsgSender Forwarded sender from the called function.
      */
     function didCall(
-        bytes4 selector,
-        bytes calldata context,
-        address caller
+        bytes calldata originalMsgData,
+        address originalMsgSender
     ) external;
 }

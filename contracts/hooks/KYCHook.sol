@@ -62,20 +62,20 @@ contract KYCHook is ITTHook, Ownable, IVersionable {
     }
 
     function didCall(
-        bytes4 selector,
-        bytes calldata context,
-        address caller
+        bytes calldata originalMsgData,
+        address originalMsgSender
     ) external override {
+        bytes4 selector = bytes4(originalMsgData[:4]);
         if (selector == ITokenTableUnlockerV2.claim.selector) {
             (, , , bytes memory extraData) = abi.decode(
-                context[4:],
+                originalMsgData[4:],
                 (uint256[], address[], uint256, bytes)
             );
             KYCData memory kycData = abi.decode(extraData, (KYCData));
-            _checkKYC(kycData, caller); // In this case, the recipient (applicant) is the caller of Unlocker
+            _checkKYC(kycData, originalMsgSender); // In this case, the recipient (applicant) is the caller of Unlocker
         } else if (selector == ITokenTableUnlockerV2.delegateClaim.selector) {
             (uint256[] memory actualIds, , bytes memory extraData) = abi.decode(
-                context[4:],
+                originalMsgData[4:],
                 (uint256[], uint256, bytes)
             );
             if (actualIds.length != 1) revert KYCFailed(); // The backend will only delegate claim 1 user at a time

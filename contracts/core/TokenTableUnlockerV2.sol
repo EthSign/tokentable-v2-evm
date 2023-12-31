@@ -93,7 +93,7 @@ contract TokenTableUnlockerV2 is
         for (uint256 i = 0; i < presetIds.length; i++) {
             _createPreset(presetIds[i], presets[i], batchId);
         }
-        _callHook(TokenTableUnlockerV2.createPresets.selector, _msgData());
+        _callHook(_msgData());
     }
 
     function createActuals(
@@ -106,7 +106,7 @@ contract TokenTableUnlockerV2 is
         for (uint256 i = 0; i < recipients.length; i++) {
             _createActual(recipients[i], actuals_[i], recipientIds[i], batchId);
         }
-        _callHook(TokenTableUnlockerV2.createActuals.selector, _msgData());
+        _callHook(_msgData());
     }
 
     function withdrawDeposit(
@@ -118,7 +118,7 @@ contract TokenTableUnlockerV2 is
         if (!$.isWithdrawable) revert NotPermissioned();
         IERC20(getProjectToken()).safeTransfer(_msgSender(), amount);
         emit TokensWithdrawn(_msgSender(), amount);
-        _callHook(TokenTableUnlockerV2.withdrawDeposit.selector, _msgData());
+        _callHook(_msgData());
     }
 
     function claim(
@@ -135,7 +135,7 @@ contract TokenTableUnlockerV2 is
             }
             _claim(actualIds[i], claimTos[i], batchId);
         }
-        _callHook(TokenTableUnlockerV2.claim.selector, _msgData());
+        _callHook(_msgData());
     }
 
     function delegateClaim(
@@ -149,7 +149,7 @@ contract TokenTableUnlockerV2 is
         for (uint256 i = 0; i < actualIds.length; i++) {
             _claim(actualIds[i], address(0), batchId);
         }
-        _callHook(TokenTableUnlockerV2.delegateClaim.selector, _msgData());
+        _callHook(_msgData());
     }
 
     function cancel(
@@ -187,7 +187,7 @@ contract TokenTableUnlockerV2 is
             );
             delete $.actuals[actualId];
         }
-        _callHook(TokenTableUnlockerV2.cancel.selector, _msgData());
+        _callHook(_msgData());
     }
 
     function setHook(ITTHook hook_) external virtual override onlyOwner {
@@ -195,7 +195,7 @@ contract TokenTableUnlockerV2 is
             storage $ = _getTokenTableUnlockerV2Storage();
         if (!$.isHookable) revert NotPermissioned();
         $.hook = hook_;
-        _callHook(TokenTableUnlockerV2.setHook.selector, _msgData());
+        _callHook(_msgData());
     }
 
     function setClaimingDelegate(
@@ -212,7 +212,7 @@ contract TokenTableUnlockerV2 is
             storage $ = _getTokenTableUnlockerV2Storage();
         $.isCancelable = false;
         emit CancelDisabled();
-        _callHook(TokenTableUnlockerV2.disableCancel.selector, _msgData());
+        _callHook(_msgData());
     }
 
     function disableHook() external virtual override onlyOwner {
@@ -220,7 +220,7 @@ contract TokenTableUnlockerV2 is
             storage $ = _getTokenTableUnlockerV2Storage();
         $.isHookable = false;
         emit HookDisabled();
-        _callHook(TokenTableUnlockerV2.disableHook.selector, _msgData());
+        _callHook(_msgData());
         $.hook = ITTHook(address(0));
     }
 
@@ -229,7 +229,7 @@ contract TokenTableUnlockerV2 is
             storage $ = _getTokenTableUnlockerV2Storage();
         $.isWithdrawable = false;
         emit WithdrawDisabled();
-        _callHook(TokenTableUnlockerV2.disableWithdraw.selector, _msgData());
+        _callHook(_msgData());
     }
 
     function transferOwnership(
@@ -329,14 +329,11 @@ contract TokenTableUnlockerV2 is
         );
     }
 
-    function _callHook(
-        bytes4 selector,
-        bytes calldata context
-    ) internal virtual {
+    function _callHook(bytes calldata context) internal virtual {
         TokenTableUnlockerV2Storage
             storage $ = _getTokenTableUnlockerV2Storage();
         if (address($.hook) == address(0)) return;
-        $.hook.didCall(selector, context, _msgSender());
+        $.hook.didCall(context, _msgSender());
     }
 
     function deployer() external view virtual override returns (ITTUDeployer) {
