@@ -14,7 +14,7 @@ struct Attestation {
     address attester;
     uint64 validUntil;
     bool revoked;
-    address[] recipients;
+    bytes[] recipients;
     bytes data;
 }
 
