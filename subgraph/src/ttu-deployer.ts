@@ -1,5 +1,5 @@
 import {BigInt, DataSourceContext} from '@graphprotocol/graph-ts'
-import {TokenTableSuiteDeployed as TokenTableSuiteDeployedEvent} from '../generated/TTUDeployer/TTUDeployer'
+import {TokenTableSuiteDeployed as TokenTableSuiteDeployedEvent} from '../generated/TTUDeployerLite/TTUDeployerLite'
 import {
     TokenTableSuiteDeployed,
     TTUV2InstanceMetadata

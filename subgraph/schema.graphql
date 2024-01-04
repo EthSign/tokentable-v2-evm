@@ -62,6 +62,7 @@ type TTUV2InstanceMetadata @entity {
 
 type Actual @entity {
   id: String!
+  canceled: Boolean!
   projectId: String!
   presetId: Bytes!
   startTimestampAbsolute: BigInt!

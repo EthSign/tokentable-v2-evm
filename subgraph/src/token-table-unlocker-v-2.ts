@@ -1,4 +1,4 @@
-import {Bytes, dataSource, store} from '@graphprotocol/graph-ts'
+import {BigInt, Bytes, dataSource} from '@graphprotocol/graph-ts'
 import {
     ActualCancelled as ActualCancelledEvent,
     ActualCreated as ActualCreatedEvent,
@@ -28,6 +28,12 @@ function getInitializedEventID(): Bytes {
     )
 }
 
+function getGlobalActualID(actualId: BigInt): string {
+    return `${actualId.toHexString()}-${dataSource
+        .context()
+        .getString('projectId')}`
+}
+
 export function handleActualCancelled(event: ActualCancelledEvent): void {
     const context = dataSource.context()
 
@@ -45,7 +51,8 @@ export function handleActualCancelled(event: ActualCancelledEvent): void {
     entity.transactionHash = event.transaction.hash
     entity.save()
 
-    store.remove('Actual', event.params.actualId.toHexString())
+    let actual = Actual.load(getGlobalActualID(event.params.actualId))!
+    actual.canceled = true
 
     let metadata = TTUV2InstanceMetadata.load(context.getString('projectId'))!
     metadata.totalActualCancelledEventCount++
@@ -66,9 +73,9 @@ export function handleActualCreated(event: ActualCreatedEvent): void {
     entity.batchId = event.params.batchId
     entity.recipient = event.params.recipient
     entity.recipientId = event.params.recipientId
-    entity.amountSkipped = TokenTableUnlockerV2.bind(event.address)
-        .actuals(event.params.actualId)
-        .getAmountClaimed()
+    entity.amountSkipped = TokenTableUnlockerV2.bind(event.address).actuals(
+        event.params.actualId
+    ).amountClaimed
     entity.projectId = context.getString('projectId')
     entity.transactionHash = event.transaction.hash
     entity.save()
@@ -76,12 +83,13 @@ export function handleActualCreated(event: ActualCreatedEvent): void {
     let actualFromContract = TokenTableUnlockerV2.bind(event.address).actuals(
         event.params.actualId
     )
-    let actual = new Actual(event.params.actualId.toHexString())
+
+    let actual = new Actual(getGlobalActualID(event.params.actualId))
     actual.presetId = event.params.presetId
-    actual.startTimestampAbsolute =
-        actualFromContract.getStartTimestampAbsolute()
-    actual.amountClaimed = actualFromContract.getAmountClaimed()
-    actual.totalAmount = actualFromContract.getTotalAmount()
+    actual.canceled = false
+    actual.startTimestampAbsolute = actualFromContract.startTimestampAbsolute
+    actual.amountClaimed = actualFromContract.amountClaimed
+    actual.totalAmount = actualFromContract.totalAmount
     actual.projectId = context.getString('projectId')
     actual.save()
 
@@ -149,7 +157,7 @@ export function handleTokensClaimed(event: TokensClaimedEvent): void {
     entity.transactionHash = event.transaction.hash
     entity.save()
 
-    let actual = Actual.load(event.params.actualId.toHexString())!
+    let actual = Actual.load(getGlobalActualID(event.params.actualId))!
     actual.amountClaimed = actual.amountClaimed.plus(event.params.amount)
     actual.save()
 
