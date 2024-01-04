@@ -15,11 +15,12 @@ import {
     TTFutureTokenV2,
     TTUDeployerLite,
     TTUV2BeaconManager,
-    TTTrackerTokenV2
+    TTTrackerTokenV2,
+    MockHook
 } from '../typechain-types'
 import {HardhatEthersSigner} from '@nomicfoundation/hardhat-ethers/signers'
 import {id, ZeroAddress, AbiCoder, encodeBytes32String} from 'ethers'
-import {time, mine} from '@nomicfoundation/hardhat-network-helpers'
+import {mine} from '@nomicfoundation/hardhat-network-helpers'
 import {setNextBlockTimestamp} from '@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time'
 
 chai.use(chaiAsPromised)
@@ -35,13 +36,20 @@ const calculateAmountOfTokensToClaimAtTimestamp = (
     linearBips: bigint[],
     numOfUnlocksForEachLinear: bigint[],
     bipsPrecision: bigint,
-    totalAmount: bigint
+    totalAmount: bigint,
+    amountClaimed: bigint
 ): bigint => {
     const precisionDecimals = 10n ** 10n
     let claimableBips = 0n
     const claimTimestampRelative =
         claimTimestampAbsolute - startTimestampAbsolute
     let latestIncompleteLinearIndex = 0
+    if (
+        claimTimestampAbsolute <
+        startTimestampAbsolute + linearStartTimestampsRelative[0]
+    ) {
+        return amountClaimed
+    }
     let k
     for (k = 0; k < linearStartTimestampsRelative.length; k++) {
         if (linearStartTimestampsRelative[k] <= claimTimestampRelative) {
@@ -95,8 +103,12 @@ const calculateAmountOfTokensToClaimAtTimestamp = (
     if (claimableBips > bipsPrecision * precisionDecimals) {
         claimableBips = bipsPrecision * precisionDecimals
     }
-
-    return (claimableBips * totalAmount) / bipsPrecision / precisionDecimals
+    let updatedAmountClaimed =
+        (claimableBips * totalAmount) / bipsPrecision / precisionDecimals
+    if (amountClaimed > updatedAmountClaimed) {
+        updatedAmountClaimed = amountClaimed
+    }
+    return updatedAmountClaimed
 }
 
 describe('V2', () => {
@@ -241,7 +253,7 @@ describe('V2', () => {
                         0,
                         '0x'
                     )
-                ).to.be.revertedWithCustomError(unlocker, 'InvalidPresetFormat')
+                ).to.be.revertedWithCustomError(unlocker, 'PresetDoesNotExist')
                 await expect(
                     unlocker.connect(founder).createActuals(
                         [investor.address],
@@ -342,12 +354,11 @@ describe('V2', () => {
                     timeSkipped: bigint,
                     actualId: bigint
                 ) => {
-                    await time.setNextBlockTimestamp(
-                        startTimestampAbsolute + timeSkipped
-                    )
-                    await mine()
                     const onchainResult =
-                        await unlocker.calculateAmountClaimable(actualId)
+                        await unlocker.simulateAmountClaimable(
+                            actualId,
+                            startTimestampAbsolute + timeSkipped
+                        )
                     const offchainResult =
                         calculateAmountOfTokensToClaimAtTimestamp(
                             startTimestampAbsolute,
@@ -357,7 +368,8 @@ describe('V2', () => {
                             linearBips,
                             numOfUnlocksForEachLinear,
                             BIPS_PRECISION,
-                            totalAmount
+                            totalAmount,
+                            (await unlocker.actuals(actualId)).amountClaimed
                         )
                     expect(onchainResult.updatedAmountClaimed).to.equal(
                         offchainResult
@@ -512,7 +524,8 @@ describe('V2', () => {
                         linearBips,
                         numOfUnlocksForEachLinear,
                         BIPS_PRECISION,
-                        totalAmount
+                        totalAmount,
+                        0n
                     )
                 amountClaimed += deltaAmountClaimable
                 await expect(
@@ -560,7 +573,8 @@ describe('V2', () => {
                         linearBips,
                         numOfUnlocksForEachLinear,
                         BIPS_PRECISION,
-                        totalAmount
+                        totalAmount,
+                        0n
                     ) - amountClaimed
                 amountClaimed += deltaAmountClaimable
                 balanceBefore = await projectToken.balanceOf(investor.address)
@@ -596,7 +610,8 @@ describe('V2', () => {
                         linearBips,
                         numOfUnlocksForEachLinear,
                         BIPS_PRECISION,
-                        totalAmount
+                        totalAmount,
+                        0n
                     ) - amountClaimed
                 amountClaimed += deltaAmountClaimable
                 balanceBefore = await projectToken.balanceOf(investor.address)
@@ -632,7 +647,8 @@ describe('V2', () => {
                         linearBips,
                         numOfUnlocksForEachLinear,
                         BIPS_PRECISION,
-                        totalAmount
+                        totalAmount,
+                        0n
                     ) - amountClaimed
                 amountClaimed += deltaAmountClaimable
                 balanceBefore = await projectToken.balanceOf(investor.address)
@@ -703,7 +719,8 @@ describe('V2', () => {
                         linearBips,
                         numOfUnlocksForEachLinear,
                         BIPS_PRECISION,
-                        totalAmount
+                        totalAmount,
+                        0n
                     )
                 await unlocker
                     .connect(investor)
@@ -722,7 +739,8 @@ describe('V2', () => {
                         linearBips,
                         numOfUnlocksForEachLinear,
                         BIPS_PRECISION,
-                        totalAmount
+                        totalAmount,
+                        0n
                     ) - amountSentToInvestor
                 const cancelTx = await unlocker
                     .connect(founder)
@@ -776,7 +794,7 @@ describe('V2', () => {
              */
         })
 
-        describe('trackerToken', () => {
+        describe('TrackerToken', () => {
             it('should reflect the correct claimable amount', async () => {
                 const TrackerFactory =
                     await ethers.getContractFactory('TTTrackerTokenV2')
@@ -1143,6 +1161,66 @@ describe('V2', () => {
                     '0x'
                 )
                 await futureToken2.tokensOfOwner(investor.address)
+            })
+        })
+
+        describe('Hook', () => {
+            let mockHook: MockHook
+
+            beforeEach(async () => {
+                mockHook = await (
+                    await ethers.getContractFactory('MockHook')
+                ).deploy()
+            })
+
+            it('should decode data properly and emit mock event', async () => {
+                await unlocker
+                    .connect(founder)
+                    .setHook(await mockHook.getAddress())
+                await unlocker
+                    .connect(founder)
+                    .createPresets([presetId], [preset], 0, '0x')
+                await unlocker.connect(founder).createActuals(
+                    [investor.address],
+                    [
+                        {
+                            presetId,
+                            startTimestampAbsolute,
+                            amountClaimed: amountSkipped,
+                            totalAmount
+                        }
+                    ],
+                    [0],
+                    0,
+                    '0x'
+                )
+                await projectToken
+                    .connect(founder)
+                    .transfer(await unlocker.getAddress(), amountDepositingNow)
+                const actualId = (
+                    await futureToken.tokensOfOwner(investor.address)
+                )[0]
+                const batchId = Math.floor(Math.random() * 100)
+                const attestationId = Math.floor(Math.random() * 100)
+                const applicantId = 'Test Applicant ID'
+                const applicant = investor.address
+                const tx = await unlocker.connect(founder).delegateClaim(
+                    [actualId],
+                    batchId,
+                    AbiCoder.defaultAbiCoder().encode(
+                        ['tuple(uint256,string,address)'],
+                        [
+                            Object.values({
+                                attestationId,
+                                applicantId,
+                                applicant
+                            })
+                        ]
+                    )
+                )
+                await expect(tx)
+                    .to.emit(mockHook, 'MockHookDelegateClaim')
+                    .withArgs(actualId, batchId, applicantId, applicant)
             })
         })
     })

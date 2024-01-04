@@ -7,6 +7,7 @@ const calculateAmountOfTokensToClaimAtTimestamp = (
     numOfUnlocksForEachLinear: bigint[],
     bipsPrecision: bigint,
     totalAmount: bigint,
+    amountClaimed: bigint,
     stream: boolean
 ): bigint => {
     const tokenPrecisionDecimals = 10n ** 5n
@@ -18,6 +19,12 @@ const calculateAmountOfTokensToClaimAtTimestamp = (
         linearStartTimestampsRelative[0]
     if (claimTimestampRelative < 0) return 0n
     let latestIncompleteLinearIndex = 0
+    if (
+        claimTimestampAbsolute <
+        startTimestampAbsolute + linearStartTimestampsRelative[0]
+    ) {
+        return amountClaimed
+    }
     let k
     for (k = 0; k < linearStartTimestampsRelative.length; k++) {
         if (linearStartTimestampsRelative[k] <= claimTimestampRelative) {
@@ -71,10 +78,12 @@ const calculateAmountOfTokensToClaimAtTimestamp = (
     if (claimableBips > bipsPrecision * tokenPrecisionDecimals) {
         claimableBips = bipsPrecision * tokenPrecisionDecimals
     }
-
-    return (
+    let updatedAmountClaimed =
         (claimableBips * totalAmount) / bipsPrecision / tokenPrecisionDecimals
-    )
+    if (amountClaimed > updatedAmountClaimed) {
+        updatedAmountClaimed = amountClaimed
+    }
+    return updatedAmountClaimed
 }
 
 const result = calculateAmountOfTokensToClaimAtTimestamp(
@@ -86,6 +95,7 @@ const result = calculateAmountOfTokensToClaimAtTimestamp(
     [10n, 1n],
     10000n,
     10000n,
+    0n,
     false
 )
 

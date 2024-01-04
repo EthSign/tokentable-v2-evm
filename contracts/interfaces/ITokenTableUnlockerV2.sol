@@ -55,6 +55,10 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
      */
     error PresetDoesNotExist();
     /**
+     * @dev 0x06aed316
+     */
+    error ActualDoesNotExist();
+    /**
      * @dev 0x78c0fc43
      */
     error InvalidSkipAmount();
@@ -262,7 +266,7 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
      */
     function actuals(
         uint256 actualId
-    ) external view virtual returns (bytes32, uint256, uint256, uint256);
+    ) external view virtual returns (Actual memory);
 
     /**
      * @return The basis point precision of this Unlocker.
