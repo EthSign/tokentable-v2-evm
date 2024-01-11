@@ -1,5 +1,5 @@
 {
-  "name": "@ethsign/tokentable",
+  "name": "@ethsign/tokentable-evm-contracts",
   "version": "2.5.5",
   "description": "TokenTable is a token management platform for Web3 founders and token holders.",
   "license": "AGPL v3",
