@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: AGPL v3
 pragma solidity ^0.8.20;
 
 import {TokenTableUnlockerV2} from "../../TokenTableUnlockerV2.sol";

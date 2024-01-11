@@ -5,6 +5,7 @@ cache
 cache-zk
 contracts/old
 docs
+deployments
 
 # TypeChain
 typechain-types

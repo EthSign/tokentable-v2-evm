@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: AGPL v3
 pragma solidity ^0.8.20;
 
 import {ITTTrackerTokenV2} from "../interfaces/ITTTrackerTokenV2.sol";

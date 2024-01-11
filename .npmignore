@@ -12,6 +12,10 @@ tsconfig.json
 .prettierrc
 .solhint.json
 .solhintignore
+.env
+.env.example
+.npmrc
+config/
 
 # Test contracts and files
 test/
@@ -20,6 +24,14 @@ contracts/test
 # Hardhat
 artifacts
 cache
+docs
+storageLayout
+subgraph
+deployments
+scripts
+deploy
+contracts/hooks
+contracts/mock
 
 # TypeChain
 typechain-types

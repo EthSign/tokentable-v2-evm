@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: AGPL v3
 pragma solidity ^0.8.20;
 
 import {ITTHook} from "../interfaces/ITTHook.sol";
@@ -7,9 +7,18 @@ import {IVersionable} from "../interfaces/IVersionable.sol";
 import {ITTFutureTokenV2} from "../interfaces/ITTFutureTokenV2.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
+// @dev https://github.com/EthSign/sign-protocol-evm/blob/main/src/models/DataLocation.sol
+enum DataLocation {
+    ONCHAIN,
+    ARWEAVE,
+    IPFS,
+    CUSTOM
+}
+
 // @dev https://github.com/EthSign/sign-protocol-evm/blob/main/src/models/Attestation.sol
 struct Attestation {
     uint256 schemaId;
+    DataLocation dataLocation;
     uint256 linkedAttestationId;
     address attester;
     uint64 validUntil;
