@@ -231,7 +231,7 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
     function hook() external view virtual returns (ITTHook);
 
     /**
-     * @return The status of a given address as the claiming delegate who can trigger claims on behalf of schedule recipients.
+     * @return Returns the array of claiming delegates who can trigger claims on behalf of schedule recipients.
      */
     function claimingDelegates()
         external
