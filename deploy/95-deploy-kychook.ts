@@ -11,7 +11,7 @@ const deployClone: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     await deploy('KYCHook', {
         from: deployer,
         log: true,
-        args: ['0x4E89Bc227eeFbA85cAad8Ca0BaA103480e01Dc59'],
+        args: ['0x29Dd65cb8654aE596d04bdf73Dd8995AAe4934b7'],
         waitConfirmations: 1
     })
 }

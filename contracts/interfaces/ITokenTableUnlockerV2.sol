@@ -37,7 +37,8 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
         uint256 batchId
     );
     event TokensWithdrawn(address by, uint256 amount);
-    event ClaimingDelegateSet(address delegate);
+    event ClaimingDelegateSet(address delegate, bool status);
+    event CreateDisabled();
     event CancelDisabled();
     event HookDisabled();
     event WithdrawDisabled();
@@ -181,9 +182,20 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
 
     /**
      * @notice Sets the claiming delegate who can trigger claims on behalf of recipients.
+     * @param delegate The claiming delegate we wish to set.
+     * @param status Whether the delegate is added(true) or revoked(false).
      * @dev Only callable by the owner.
      */
-    function setClaimingDelegate(address delegate) external virtual;
+    function setClaimingDelegate(
+        address delegate,
+        bool status
+    ) external virtual;
+
+    /**
+     * @notice Permanently disables the `createActuals()` function.
+     * @dev Only callable by the owner.
+     */
+    function disableCreate() external virtual;
 
     /**
      * @notice Permanently disables the `cancel()` function.
@@ -219,9 +231,16 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
     function hook() external view virtual returns (ITTHook);
 
     /**
-     * @return The claiming delegate who can trigger claims on behalf of schedule recipients.
+     * @return The status of a given address as the claiming delegate who can trigger claims on behalf of schedule recipients.
      */
-    function claimingDelegate() external view virtual returns (address);
+    function isClaimingDelegate(
+        address delegate
+    ) external view virtual returns (bool);
+
+    /**
+     * @return If the founder is allowed to create new schedules.
+     */
+    function isCreateable() external view virtual returns (bool);
 
     /**
      * @return If the founder is allowed to cancel schedules.

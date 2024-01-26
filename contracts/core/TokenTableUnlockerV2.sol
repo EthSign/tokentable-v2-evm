@@ -29,13 +29,14 @@ contract TokenTableUnlockerV2 is
         ITTUDeployer deployer;
         ITTFutureTokenV2 futureToken;
         ITTHook hook;
-        address claimingDelegate;
+        bool isCreateable;
         bool isCancelable;
         bool isHookable;
         bool isWithdrawable;
         mapping(bytes32 => Preset) _presets;
         mapping(uint256 => Actual) actuals;
         mapping(uint256 => uint256) pendingAmountClaimableForCancelledActuals;
+        mapping(address => bool) claimingDelegates;
     }
 
     // keccak256(abi.encode(uint256(keccak256("ethsign.tokentable.TokenTableUnlockerV2")) - 1)) & ~bytes32(uint256(0xff))
@@ -77,7 +78,7 @@ contract TokenTableUnlockerV2 is
         $.futureToken = ITTFutureTokenV2(futureToken_);
         $.deployer = ITTUDeployer(deployer_);
         __ReentrancyGuard_init_unchained();
-        $.claimingDelegate = owner();
+        $.isCreateable = true;
         $.isCancelable = isCancelable_;
         $.isHookable = isHookable_;
         $.isWithdrawable = isWithdrawable_;
@@ -103,6 +104,9 @@ contract TokenTableUnlockerV2 is
         uint256 batchId,
         bytes calldata
     ) external virtual override onlyOwner {
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
+        if (!$.isCreateable) revert NotPermissioned();
         for (uint256 i = 0; i < recipients.length; i++) {
             _createActual(recipients[i], actuals_[i], recipientIds[i], batchId);
         }
@@ -145,7 +149,7 @@ contract TokenTableUnlockerV2 is
     ) external virtual override nonReentrant {
         TokenTableUnlockerV2Storage
             storage $ = _getTokenTableUnlockerV2Storage();
-        if (_msgSender() != $.claimingDelegate) revert NotPermissioned();
+        if (!$.claimingDelegates[_msgSender()]) revert NotPermissioned();
         for (uint256 i = 0; i < actualIds.length; i++) {
             _claim(actualIds[i], address(0), batchId);
         }
@@ -199,12 +203,21 @@ contract TokenTableUnlockerV2 is
     }
 
     function setClaimingDelegate(
-        address delegate
+        address delegate,
+        bool status
     ) external virtual override onlyOwner {
         TokenTableUnlockerV2Storage
             storage $ = _getTokenTableUnlockerV2Storage();
-        $.claimingDelegate = delegate;
-        emit ClaimingDelegateSet(delegate);
+        $.claimingDelegates[delegate] = status;
+        emit ClaimingDelegateSet(delegate, status);
+    }
+
+    function disableCreate() external virtual override onlyOwner {
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
+        $.isCreateable = false;
+        emit CreateDisabled();
+        _callHook(_msgData());
     }
 
     function disableCancel() external virtual override onlyOwner {
@@ -235,11 +248,7 @@ contract TokenTableUnlockerV2 is
     function transferOwnership(
         address newOwner
     ) public override(IOwnable, OwnableUpgradeable) {
-        TokenTableUnlockerV2Storage
-            storage $ = _getTokenTableUnlockerV2Storage();
         OwnableUpgradeable.transferOwnership(newOwner);
-        $.claimingDelegate = newOwner;
-        emit ClaimingDelegateSet(newOwner);
     }
 
     function renounceOwnership() public override(IOwnable, OwnableUpgradeable) {
@@ -360,16 +369,18 @@ contract TokenTableUnlockerV2 is
         return $.hook;
     }
 
-    function claimingDelegate()
-        external
-        view
-        virtual
-        override
-        returns (address)
-    {
+    function isClaimingDelegate(
+        address delegate
+    ) external view virtual override returns (bool) {
         TokenTableUnlockerV2Storage
             storage $ = _getTokenTableUnlockerV2Storage();
-        return $.claimingDelegate;
+        return $.claimingDelegates[delegate];
+    }
+
+    function isCreateable() external view virtual override returns (bool) {
+        TokenTableUnlockerV2Storage
+            storage $ = _getTokenTableUnlockerV2Storage();
+        return $.isCreateable;
     }
 
     function isCancelable() external view virtual override returns (bool) {
@@ -423,7 +434,7 @@ contract TokenTableUnlockerV2 is
     }
 
     function version() external pure returns (string memory) {
-        return "2.5.5";
+        return "2.5.6";
     }
 
     function calculateAmountClaimable(

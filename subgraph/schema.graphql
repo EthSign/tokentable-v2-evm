@@ -46,6 +46,7 @@ type TTEvent @entity(immutable: true) {
   pendingAmountClaimable: BigInt
   batchId: BigInt
   amountSkipped: BigInt
+  status: Boolean
 }
 
 type TTUV2InstanceMetadata @entity {

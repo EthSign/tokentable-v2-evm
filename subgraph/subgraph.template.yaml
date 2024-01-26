@@ -67,7 +67,7 @@ templates:
           handler: handleTokensClaimed
         - event: TokensWithdrawn(address,uint256)
           handler: handleTokensWithdrawn
-        - event: ClaimingDelegateSet(address)
+        - event: ClaimingDelegateSet(address,bool)
           handler: handleClaimingDelegateSet
         - event: CancelDisabled()
           handler: handleCancelDisabled

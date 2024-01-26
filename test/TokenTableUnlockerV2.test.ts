@@ -294,6 +294,29 @@ describe('V2', () => {
                     .withArgs(presetId, actualId, investor.address, 0, 0)
             })
 
+            it('should forbid creating new actuals if create is disabled', async () => {
+                await unlocker
+                    .connect(founder)
+                    .createPresets([presetId], [preset], 0, '0x')
+                await unlocker.connect(founder).disableCreate()
+                await expect(
+                    unlocker.connect(founder).createActuals(
+                        [investor.address],
+                        [
+                            {
+                                presetId,
+                                startTimestampAbsolute,
+                                amountClaimed: amountSkipped,
+                                totalAmount
+                            }
+                        ],
+                        [0],
+                        0,
+                        '0x'
+                    )
+                ).to.be.revertedWithCustomError(unlocker, 'NotPermissioned')
+            })
+
             it('should let founder withdraw deposit and enforce permissions', async () => {
                 await unlocker
                     .connect(founder)
@@ -1177,6 +1200,9 @@ describe('V2', () => {
                 await unlocker
                     .connect(founder)
                     .setHook(await mockHook.getAddress())
+                await unlocker
+                    .connect(founder)
+                    .setClaimingDelegate(founder.address, true)
                 await unlocker
                     .connect(founder)
                     .createPresets([presetId], [preset], 0, '0x')

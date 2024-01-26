@@ -203,6 +203,7 @@ export function handleClaimingDelegateSet(
     entity.delegate = event.params.delegate
     entity.projectId = context.getString('projectId')
     entity.transactionHash = event.transaction.hash
+    entity.status = event.params.status
     entity.save()
 
     let metadata = TTUV2InstanceMetadata.load(context.getString('projectId'))!
