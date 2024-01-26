@@ -11,6 +11,7 @@ import {ITTUDeployer} from "../interfaces/ITTUDeployer.sol";
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // solhint-disable var-name-mixedcase
 // solhint-disable no-inline-assembly
@@ -23,6 +24,7 @@ contract TokenTableUnlockerV2 is
     ReentrancyGuardUpgradeable
 {
     using SafeERC20 for IERC20;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     /// @custom:storage-location erc7201:ethsign.tokentable.TokenTableUnlockerV2
     struct TokenTableUnlockerV2Storage {
@@ -36,7 +38,7 @@ contract TokenTableUnlockerV2 is
         mapping(bytes32 => Preset) _presets;
         mapping(uint256 => Actual) actuals;
         mapping(uint256 => uint256) pendingAmountClaimableForCancelledActuals;
-        mapping(address => bool) claimingDelegates;
+        EnumerableSet.AddressSet claimingDelegates;
     }
 
     // keccak256(abi.encode(uint256(keccak256("ethsign.tokentable.TokenTableUnlockerV2")) - 1)) & ~bytes32(uint256(0xff))
@@ -149,7 +151,8 @@ contract TokenTableUnlockerV2 is
     ) external virtual override nonReentrant {
         TokenTableUnlockerV2Storage
             storage $ = _getTokenTableUnlockerV2Storage();
-        if (!$.claimingDelegates[_msgSender()]) revert NotPermissioned();
+        if (!$.claimingDelegates.contains(_msgSender()))
+            revert NotPermissioned();
         for (uint256 i = 0; i < actualIds.length; i++) {
             _claim(actualIds[i], address(0), batchId);
         }
@@ -208,7 +211,11 @@ contract TokenTableUnlockerV2 is
     ) external virtual override onlyOwner {
         TokenTableUnlockerV2Storage
             storage $ = _getTokenTableUnlockerV2Storage();
-        $.claimingDelegates[delegate] = status;
+        if (status) {
+            $.claimingDelegates.add(delegate);
+        } else {
+            $.claimingDelegates.remove(delegate);
+        }
         emit ClaimingDelegateSet(delegate, status);
     }
 
@@ -369,12 +376,16 @@ contract TokenTableUnlockerV2 is
         return $.hook;
     }
 
-    function isClaimingDelegate(
-        address delegate
-    ) external view virtual override returns (bool) {
+    function claimingDelegates()
+        external
+        view
+        virtual
+        override
+        returns (address[] memory)
+    {
         TokenTableUnlockerV2Storage
             storage $ = _getTokenTableUnlockerV2Storage();
-        return $.claimingDelegates[delegate];
+        return $.claimingDelegates.values();
     }
 
     function isCreateable() external view virtual override returns (bool) {

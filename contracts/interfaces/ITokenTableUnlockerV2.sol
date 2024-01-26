@@ -233,9 +233,11 @@ abstract contract ITokenTableUnlockerV2 is IOwnable, IVersionable {
     /**
      * @return The status of a given address as the claiming delegate who can trigger claims on behalf of schedule recipients.
      */
-    function isClaimingDelegate(
-        address delegate
-    ) external view virtual returns (bool);
+    function claimingDelegates()
+        external
+        view
+        virtual
+        returns (address[] memory);
 
     /**
      * @return If the founder is allowed to create new schedules.
