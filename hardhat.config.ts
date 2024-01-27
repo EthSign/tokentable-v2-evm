@@ -133,6 +133,13 @@ export default {
             saveDeployments: true,
             zksync: false
         },
+        zetachain: {
+            chainId: 7000,
+            url: 'https://zetachain-evm.blockpi.network/v1/rpc/public',
+            accounts: [process.env.PRIVATE_KEY],
+            saveDeployments: true,
+            zksync: false
+        },
         scroll: {
             chainId: 534352,
             url: 'https://rpc.ankr.com/scroll',
@@ -192,7 +199,8 @@ export default {
             avaxC: process.env.SNOWTRACE_KEY,
             sepolia: process.env.ETHERSCAN_KEY,
             mainnet: process.env.ETHERSCAN_KEY,
-            zetachainTestnet: process.env.ETHERSCAN_KEY
+            zetachainTestnet: process.env.ZETA_KEY,
+            zetachain: process.env.ZETA_KEY
         },
         customChains: [
             {
@@ -226,6 +234,14 @@ export default {
                 urls: {
                     apiURL: 'https://zetachain-athens-3.blockscout.com/api',
                     browserURL: 'https://zetachain-athens-3.blockscout.com/'
+                }
+            },
+            {
+                network: 'zetachain',
+                chainId: 7000,
+                urls: {
+                    apiURL: 'https://zetachain.blockscout.com/api',
+                    browserURL: 'https://zetachain.blockscout.com/'
                 }
             }
         ]

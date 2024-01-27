@@ -20,7 +20,7 @@ const deployLite: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
         args: [],
         waitConfirmations: 1
     })
-    const ftDeploymentResult = await deploy('TTFTV2Gasless', {
+    const ftDeploymentResult = await deploy('TTFutureTokenV2', {
         from: deployer,
         log: true,
         args: [],

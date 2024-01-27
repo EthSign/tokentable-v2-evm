@@ -15,6 +15,7 @@
     "prep:mantaPacific": "mustache config/mantaPacific.json subgraph.template.yaml > subgraph.yaml",
     "prep:avaxC": "mustache config/avaxC.json subgraph.template.yaml > subgraph.yaml",
     "prep:zetachainTestnet": "mustache config/zetachainTestnet.json subgraph.template.yaml > subgraph.yaml",
+    "prep:zetachain": "mustache config/zetachain.json subgraph.template.yaml > subgraph.yaml",
     "prep:scroll": "mustache config/scroll.json subgraph.template.yaml > subgraph.yaml",
     "test": "graph test"
   },

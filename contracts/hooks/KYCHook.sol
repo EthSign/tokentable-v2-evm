@@ -47,7 +47,7 @@ interface ISP {
  * @dev On-chain KYC verifier for ZetaChain native airdrop.
  */
 contract KYCHook is ITTHook, Ownable, IVersionable {
-    ISP public immutable isp;
+    ISP public isp;
     mapping(uint256 => mapping(address => bool))
         public acceptedSchemasAndAttesters;
 
@@ -58,7 +58,9 @@ contract KYCHook is ITTHook, Ownable, IVersionable {
      */
     error KYCFailed();
 
-    constructor(ISP isp_) Ownable(_msgSender()) {
+    constructor() Ownable(_msgSender()) {}
+
+    function setSignProtocol(ISP isp_) external onlyOwner {
         isp = isp_;
     }
 
@@ -97,7 +99,7 @@ contract KYCHook is ITTHook, Ownable, IVersionable {
     }
 
     function version() external pure override returns (string memory) {
-        return "1.0.0-zetachain-airdrop";
+        return "1.0.1-zetachain-airdrop";
     }
 
     function _checkKYC(KYCData memory kycData, address applicant) internal {
