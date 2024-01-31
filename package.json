@@ -1,6 +1,6 @@
 {
   "name": "@ethsign/tokentable-evm-contracts",
-  "version": "2.5.6",
+  "version": "2.5.6-hotfix1",
   "description": "TokenTable is a token management platform for Web3 founders and token holders.",
   "license": "AGPL v3",
   "private": false,
