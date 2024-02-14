@@ -47,6 +47,7 @@ contract TokenTableUnlockerV2 is
 
     uint256 public constant override BIPS_PRECISION = 10 ** 4; // down to 0.01%
     uint256 public constant TOKEN_PRECISION = 10 ** 5;
+    uint256 public constant DURATION_PRECISION = 10 ** 5;
 
     function _getTokenTableUnlockerV2Storage()
         internal
@@ -240,7 +241,6 @@ contract TokenTableUnlockerV2 is
             storage $ = _getTokenTableUnlockerV2Storage();
         $.isHookable = false;
         emit HookDisabled();
-        _callHook(_msgData());
         $.hook = ITTHook(address(0));
     }
 
@@ -445,7 +445,7 @@ contract TokenTableUnlockerV2 is
     }
 
     function version() external pure returns (string memory) {
-        return "2.5.6";
+        return "2.5.7";
     }
 
     function calculateAmountClaimable(
@@ -478,7 +478,6 @@ contract TokenTableUnlockerV2 is
         Actual memory actual = $.actuals[actualId];
         if (actual.presetId == 0) revert ActualDoesNotExist();
         Preset memory preset = $._presets[actual.presetId];
-        uint256 timePrecisionDecimals = preset.stream ? 10 ** 5 : 1;
         uint256 i;
         uint256 latestIncompleteLinearIndex;
         if (
@@ -524,21 +523,23 @@ contract TokenTableUnlockerV2 is
         }
         if (latestIncompleteLinearDuration == 0)
             latestIncompleteLinearDuration = 1;
-        uint256 latestIncompleteLinearIntervalForEachUnlock = latestIncompleteLinearDuration /
-                preset.numOfUnlocksForEachLinear[latestIncompleteLinearIndex];
+        uint256 numOfUnlocksForIncompleteLinear = preset.stream
+            ? latestIncompleteLinearDuration
+            : preset.numOfUnlocksForEachLinear[latestIncompleteLinearIndex];
+        uint256 latestIncompleteLinearIntervalForEachUnlock = (latestIncompleteLinearDuration *
+                DURATION_PRECISION) / numOfUnlocksForIncompleteLinear;
         uint256 latestIncompleteLinearClaimableTimestampRelative = claimTimestampRelative -
                 preset.linearStartTimestampsRelative[
                     latestIncompleteLinearIndex
                 ];
         uint256 numOfClaimableUnlocksInIncompleteLinear = (latestIncompleteLinearClaimableTimestampRelative *
-                timePrecisionDecimals) /
+                DURATION_PRECISION) /
                 latestIncompleteLinearIntervalForEachUnlock;
         updatedAmountClaimed +=
             (preset.linearBips[latestIncompleteLinearIndex] *
                 TOKEN_PRECISION *
                 numOfClaimableUnlocksInIncompleteLinear) /
-            preset.numOfUnlocksForEachLinear[latestIncompleteLinearIndex] /
-            timePrecisionDecimals;
+            numOfUnlocksForIncompleteLinear;
         updatedAmountClaimed =
             (updatedAmountClaimed * actual.totalAmount) /
             BIPS_PRECISION /
@@ -607,17 +608,44 @@ contract TokenTableUnlockerV2 is
         Preset memory preset
     ) internal pure returns (bool) {
         uint256 total;
-        for (uint256 i = 0; i < preset.linearBips.length; i++) {
+        uint256 i;
+        for (i = 0; i < preset.linearBips.length; i++) {
             total += preset.linearBips[i];
         }
-        return
-            (total == BIPS_PRECISION) &&
+        if (
+            !(total == BIPS_PRECISION) &&
             (preset.linearBips.length ==
                 preset.linearStartTimestampsRelative.length) &&
             (preset.linearStartTimestampsRelative[
                 preset.linearStartTimestampsRelative.length - 1
             ] < preset.linearEndTimestampRelative) &&
             (preset.numOfUnlocksForEachLinear.length ==
-                preset.linearStartTimestampsRelative.length);
+                preset.linearStartTimestampsRelative.length)
+        ) {
+            return false;
+        }
+        i = 1;
+        while (true) {
+            uint256 startTimestampForSegment;
+            uint256 endTimestampForSegment;
+            if (i == preset.linearStartTimestampsRelative.length) {
+                endTimestampForSegment = preset.linearEndTimestampRelative;
+            } else {
+                endTimestampForSegment = preset.linearStartTimestampsRelative[
+                    i
+                ];
+            }
+            startTimestampForSegment = preset.linearStartTimestampsRelative[
+                i - 1
+            ];
+            if (
+                (endTimestampForSegment - startTimestampForSegment) /
+                    preset.numOfUnlocksForEachLinear[i - 1] ==
+                0
+            ) return false;
+            if (i == preset.linearStartTimestampsRelative.length) break;
+            i += 1;
+        }
+        return true;
     }
 }

@@ -10,6 +10,7 @@ contract TTUFeeCollector is ITTUFeeCollector, Ownable {
     using SafeERC20 for IERC20;
 
     uint256 public constant BIPS_PRECISION = 10 ** 4;
+    uint256 public constant MAX_FEE = 10 ** 3;
 
     uint256 public defaultFeesBips;
     mapping(address => uint256) internal _customFeesBips;
@@ -21,6 +22,7 @@ contract TTUFeeCollector is ITTUFeeCollector, Ownable {
     }
 
     function setDefaultFee(uint256 bips) external onlyOwner {
+        if (bips > MAX_FEE) revert FeesTooHigh();
         defaultFeesBips = bips;
         emit DefaultFeeSet(bips);
     }
@@ -30,6 +32,7 @@ contract TTUFeeCollector is ITTUFeeCollector, Ownable {
         address unlockerAddress,
         uint256 bips
     ) external onlyOwner {
+        if (bips > MAX_FEE) revert FeesTooHigh();
         _customFeesBips[unlockerAddress] = bips;
         emit CustomFeeSet(unlockerAddress, bips);
     }
@@ -48,7 +51,7 @@ contract TTUFeeCollector is ITTUFeeCollector, Ownable {
     }
 
     function version() external pure returns (string memory) {
-        return "2.0.1";
+        return "2.1.0";
     }
 
     function transferOwnership(
