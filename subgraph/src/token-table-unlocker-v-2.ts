@@ -41,7 +41,7 @@ export function handleActualCancelled(event: ActualCancelledEvent): void {
         event.transaction.hash.concatI32(event.logIndex.toI32())
     )
     entity.event = 'ActualCancelled'
-    entity.from = event.transaction.from
+    entity.from = TokenTableUnlockerV2.bind(event.address).owner()
     entity.timestamp = event.block.timestamp
     entity.actualId = event.params.actualId
     entity.pendingAmountClaimable = event.params.pendingAmountClaimable
@@ -66,7 +66,7 @@ export function handleActualCreated(event: ActualCreatedEvent): void {
         event.transaction.hash.concatI32(event.logIndex.toI32())
     )
     entity.event = 'ActualCreated'
-    entity.from = event.transaction.from
+    entity.from = TokenTableUnlockerV2.bind(event.address).owner()
     entity.timestamp = event.block.timestamp
     entity.presetId = event.params.presetId
     entity.actualId = event.params.actualId
@@ -128,7 +128,7 @@ export function handlePresetCreated(event: PresetCreatedEvent): void {
         event.transaction.hash.concatI32(event.logIndex.toI32())
     )
     entity.event = 'PresetCreated'
-    entity.from = event.transaction.from
+    entity.from = TokenTableUnlockerV2.bind(event.address).owner()
     entity.timestamp = event.block.timestamp
     entity.presetId = event.params.presetId
     entity.projectId = context.getString('projectId')
@@ -146,7 +146,7 @@ export function handleTokensClaimed(event: TokensClaimedEvent): void {
         event.transaction.hash.concatI32(event.logIndex.toI32())
     )
     entity.event = 'TokensClaimed'
-    entity.from = event.transaction.from
+    entity.from = event.params.caller
     entity.timestamp = event.block.timestamp
     entity.actualId = event.params.actualId
     entity.to = event.params.to
@@ -176,7 +176,7 @@ export function handleTokensWithdrawn(event: TokensWithdrawnEvent): void {
         event.transaction.hash.concatI32(event.logIndex.toI32())
     )
     entity.event = 'TokensWithdrawn'
-    entity.from = event.transaction.from
+    entity.from = event.params.by
     entity.timestamp = event.block.timestamp
     entity.by = event.params.by
     entity.amount = event.params.amount
@@ -198,7 +198,7 @@ export function handleClaimingDelegateSet(
         event.transaction.hash.concatI32(event.logIndex.toI32())
     )
     entity.event = 'ClaimingDelegateSet'
-    entity.from = event.transaction.from
+    entity.from = TokenTableUnlockerV2.bind(event.address).owner()
     entity.timestamp = event.block.timestamp
     entity.delegate = event.params.delegate
     entity.projectId = context.getString('projectId')
@@ -218,7 +218,7 @@ export function handleCancelDisabled(event: CancelDisabledEvent): void {
         event.transaction.hash.concatI32(event.logIndex.toI32())
     )
     entity.event = 'CancelDisabled'
-    entity.from = event.transaction.from
+    entity.from = TokenTableUnlockerV2.bind(event.address).owner()
     entity.timestamp = event.block.timestamp
     entity.projectId = context.getString('projectId')
     entity.transactionHash = event.transaction.hash
@@ -236,7 +236,7 @@ export function handleHookDisabled(event: HookDisabledEvent): void {
         event.transaction.hash.concatI32(event.logIndex.toI32())
     )
     entity.event = 'HookDisabled'
-    entity.from = event.transaction.from
+    entity.from = TokenTableUnlockerV2.bind(event.address).owner()
     entity.timestamp = event.block.timestamp
     entity.projectId = context.getString('projectId')
     entity.transactionHash = event.transaction.hash
@@ -250,7 +250,7 @@ export function handleWithdrawDisabled(event: WithdrawDisabledEvent): void {
         event.transaction.hash.concatI32(event.logIndex.toI32())
     )
     entity.event = 'WithdrawDisabled'
-    entity.from = event.transaction.from
+    entity.from = TokenTableUnlockerV2.bind(event.address).owner()
     entity.timestamp = event.block.timestamp
     entity.transactionHash = event.transaction.hash
     entity.projectId = context.getString('projectId')
