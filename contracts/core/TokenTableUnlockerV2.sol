@@ -240,7 +240,6 @@ contract TokenTableUnlockerV2 is
             storage $ = _getTokenTableUnlockerV2Storage();
         $.isHookable = false;
         emit HookDisabled();
-        _callHook(_msgData());
         $.hook = ITTHook(address(0));
     }
 
