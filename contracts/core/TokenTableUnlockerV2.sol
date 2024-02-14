@@ -606,17 +606,44 @@ contract TokenTableUnlockerV2 is
         Preset memory preset
     ) internal pure returns (bool) {
         uint256 total;
-        for (uint256 i = 0; i < preset.linearBips.length; i++) {
+        uint256 i;
+        for (i = 0; i < preset.linearBips.length; i++) {
             total += preset.linearBips[i];
         }
-        return
-            (total == BIPS_PRECISION) &&
+        if (
+            !(total == BIPS_PRECISION) &&
             (preset.linearBips.length ==
                 preset.linearStartTimestampsRelative.length) &&
             (preset.linearStartTimestampsRelative[
                 preset.linearStartTimestampsRelative.length - 1
             ] < preset.linearEndTimestampRelative) &&
             (preset.numOfUnlocksForEachLinear.length ==
-                preset.linearStartTimestampsRelative.length);
+                preset.linearStartTimestampsRelative.length)
+        ) {
+            return false;
+        }
+        i = 1;
+        while (true) {
+            uint256 startTimestampForSegment;
+            uint256 endTimestampForSegment;
+            if (i == preset.linearStartTimestampsRelative.length) {
+                endTimestampForSegment = preset.linearEndTimestampRelative;
+            } else {
+                endTimestampForSegment = preset.linearStartTimestampsRelative[
+                    i
+                ];
+            }
+            startTimestampForSegment = preset.linearStartTimestampsRelative[
+                i - 1
+            ];
+            if (
+                (endTimestampForSegment - startTimestampForSegment) /
+                    preset.numOfUnlocksForEachLinear[i - 1] ==
+                0
+            ) return false;
+            if (i == preset.linearStartTimestampsRelative.length) break;
+            i += 1;
+        }
+        return true;
     }
 }
