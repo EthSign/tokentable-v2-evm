@@ -14,6 +14,11 @@ interface ITTUFeeCollector is IOwnable, IVersionable {
     event CustomFeeSet(address unlockerAddress, uint256 bips);
 
     /**
+     * @dev 0xc9034e18
+     */
+    error FeesTooHigh();
+
+    /**
      * @notice Returns the amount of fees to collect.
      * @param unlockerAddress The address of the Unlocker. Used to fetch pricing.
      * @param tokenTransferred The number of tokens transferred.
