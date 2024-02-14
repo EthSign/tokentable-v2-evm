@@ -47,6 +47,7 @@ contract TokenTableUnlockerV2 is
 
     uint256 public constant override BIPS_PRECISION = 10 ** 4; // down to 0.01%
     uint256 public constant TOKEN_PRECISION = 10 ** 5;
+    uint256 public constant DURATION_PRECISION = 10 ** 5;
 
     function _getTokenTableUnlockerV2Storage()
         internal
@@ -444,7 +445,7 @@ contract TokenTableUnlockerV2 is
     }
 
     function version() external pure returns (string memory) {
-        return "2.5.6";
+        return "2.5.7";
     }
 
     function calculateAmountClaimable(
@@ -477,7 +478,6 @@ contract TokenTableUnlockerV2 is
         Actual memory actual = $.actuals[actualId];
         if (actual.presetId == 0) revert ActualDoesNotExist();
         Preset memory preset = $._presets[actual.presetId];
-        uint256 timePrecisionDecimals = preset.stream ? 10 ** 5 : 1;
         uint256 i;
         uint256 latestIncompleteLinearIndex;
         if (
@@ -523,21 +523,23 @@ contract TokenTableUnlockerV2 is
         }
         if (latestIncompleteLinearDuration == 0)
             latestIncompleteLinearDuration = 1;
-        uint256 latestIncompleteLinearIntervalForEachUnlock = latestIncompleteLinearDuration /
-                preset.numOfUnlocksForEachLinear[latestIncompleteLinearIndex];
+        uint256 numOfUnlocksForIncompleteLinear = preset.stream
+            ? latestIncompleteLinearDuration
+            : preset.numOfUnlocksForEachLinear[latestIncompleteLinearIndex];
+        uint256 latestIncompleteLinearIntervalForEachUnlock = (latestIncompleteLinearDuration *
+                DURATION_PRECISION) / numOfUnlocksForIncompleteLinear;
         uint256 latestIncompleteLinearClaimableTimestampRelative = claimTimestampRelative -
                 preset.linearStartTimestampsRelative[
                     latestIncompleteLinearIndex
                 ];
         uint256 numOfClaimableUnlocksInIncompleteLinear = (latestIncompleteLinearClaimableTimestampRelative *
-                timePrecisionDecimals) /
+                DURATION_PRECISION) /
                 latestIncompleteLinearIntervalForEachUnlock;
         updatedAmountClaimed +=
             (preset.linearBips[latestIncompleteLinearIndex] *
                 TOKEN_PRECISION *
                 numOfClaimableUnlocksInIncompleteLinear) /
-            preset.numOfUnlocksForEachLinear[latestIncompleteLinearIndex] /
-            timePrecisionDecimals;
+            numOfUnlocksForIncompleteLinear;
         updatedAmountClaimed =
             (updatedAmountClaimed * actual.totalAmount) /
             BIPS_PRECISION /
