@@ -19,7 +19,7 @@ contract TTUV2Native is TokenTableUnlockerV2 {
         TokenTableUnlockerV2Storage
             storage $ = _getTokenTableUnlockerV2Storage();
         if (!$.isWithdrawable) revert NotPermissioned();
-        //IERC20(getProjectToken()).safeTransfer(_msgSender(), amount);
+        // slither-disable-next-line
         (bool sent, bytes memory data) = payable(_msgSender()).call{
             value: amount
         }("");
@@ -47,10 +47,7 @@ contract TTUV2Native is TokenTableUnlockerV2 {
         ];
         if (deltaAmountClaimable != 0) {
             $.pendingAmountClaimableForCancelledActuals[actualId] = 0;
-            // IERC20(getProjectToken()).safeTransfer(
-            //     recipient,
-            //     deltaAmountClaimable
-            // );
+            // slither-disable-next-line
             (bool sent, bytes memory data) = payable(recipient).call{
                 value: deltaAmountClaimable
             }("");
@@ -81,7 +78,7 @@ contract TTUV2Native is TokenTableUnlockerV2 {
         ) = calculateAmountClaimable(actualId);
         Actual storage actual = $.actuals[actualId];
         actual.amountClaimed = updatedAmountClaimed;
-        // IERC20(getProjectToken()).safeTransfer(recipient, deltaAmountClaimable);
+        // slither-disable-next-line
         (bool sent, bytes memory data) = payable(recipient).call{
             value: deltaAmountClaimable
         }("");
