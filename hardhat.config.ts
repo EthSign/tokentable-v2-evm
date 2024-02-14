@@ -8,6 +8,7 @@ import '@matterlabs/hardhat-zksync-solc'
 import '@matterlabs/hardhat-zksync-verify'
 import '@openzeppelin/hardhat-upgrades'
 import 'solidity-docgen'
+import 'hardhat-gas-reporter'
 
 if (process.env.NODE_ENV !== 'PRODUCTION') {
     config()
@@ -249,5 +250,8 @@ export default {
     docgen: {
         pages: 'files',
         exclude: ['libraries', 'mock']
+    },
+    gasReporter: {
+        enabled: true
     }
 }
