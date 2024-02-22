@@ -17,6 +17,7 @@
     "prep:zetachainTestnet": "mustache config/zetachainTestnet.json subgraph.template.yaml > subgraph.yaml",
     "prep:zetachain": "mustache config/zetachain.json subgraph.template.yaml > subgraph.yaml",
     "prep:scroll": "mustache config/scroll.json subgraph.template.yaml > subgraph.yaml",
+    "prep:scrollSepolia": "mustache config/scrollSepolia.json subgraph.template.yaml > subgraph.yaml",
     "test": "graph test"
   },
   "dependencies": {

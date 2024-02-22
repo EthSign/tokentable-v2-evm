@@ -55,13 +55,13 @@ export default {
         },
         zkSyncTestnet: {
             chainId: 280,
-            url: 'https://testnet.era.zksync.dev',
-            ethNetwork: 'https://ethereum-goerli.publicnode.com',
+            url: 'https://sepolia.era.zksync.dev/',
+            ethNetwork: 'https://rpc.ankr.com/eth_sepolia',
             accounts: [process.env.PRIVATE_KEY],
             saveDeployments: true,
             zksync: true,
             verifyURL:
-                'https://zksync2-testnet-explorer.zksync.dev/contract_verification'
+                'https://explorer.sepolia.era.zksync.dev/contract_verification'
         },
         zkSyncEra: {
             chainId: 324,
@@ -154,6 +154,13 @@ export default {
             accounts: [process.env.PRIVATE_KEY],
             saveDeployments: true,
             zksync: false
+        },
+        scrollSepolia: {
+            chainId: 534351,
+            url: 'https://sepolia-rpc.scroll.io/',
+            accounts: [process.env.PRIVATE_KEY!],
+            saveDeployments: true,
+            zksync: false
         }
     },
     solidity: {
@@ -165,26 +172,28 @@ export default {
                         enabled: true,
                         runs: 200
                     }
-                }
+                },
+                eraVersion: '1.0.0'
             }
         ]
     },
     zksolc: {
-        version: 'latest',
+        version: '1.3.23',
         settings: {
             optimizer: {
                 enabled: true,
                 runs: 200
             },
-            libraries: {
-                'contracts/libraries/Clones.sol': {
-                    /*
-                     * zkSync Era Mainnet: 0x52cb8d348604aBB1720a713eADf3e4Afef650f93
-                     * zkSync Era Testnet: 0x222C78A7CaDC3D63c72cE39F9A382B6aF075fC74
-                     */
-                    Clones: '0x52cb8d348604aBB1720a713eADf3e4Afef650f93'
-                }
-            }
+            isSystem: true
+            // libraries: {
+            //     'contracts/libraries/Clones.sol': {
+            //         /*
+            //          * zkSync Era Mainnet: 0x52cb8d348604aBB1720a713eADf3e4Afef650f93
+            //          * zkSync Era Testnet: 0x222C78A7CaDC3D63c72cE39F9A382B6aF075fC74
+            //          */
+            //         Clones: '0x52cb8d348604aBB1720a713eADf3e4Afef650f93'
+            //     }
+            // }
         }
     },
     namedAccounts: {
@@ -201,7 +210,8 @@ export default {
             sepolia: process.env.ETHERSCAN_KEY,
             mainnet: process.env.ETHERSCAN_KEY,
             zetachainTestnet: process.env.ZETA_KEY,
-            zetachain: process.env.ZETA_KEY
+            zetachain: process.env.ZETA_KEY,
+            scrollSepolia: process.env.SCROLL_API_KEY!
         },
         customChains: [
             {
@@ -243,6 +253,14 @@ export default {
                 urls: {
                     apiURL: 'https://zetachain.blockscout.com/api',
                     browserURL: 'https://zetachain.blockscout.com/'
+                }
+            },
+            {
+                network: 'scrollSepolia',
+                chainId: 534351,
+                urls: {
+                    apiURL: 'https://api-sepolia.scrollscan.com/api',
+                    browserURL: 'https://sepolia.scrollscan.com/'
                 }
             }
         ]
