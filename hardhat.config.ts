@@ -54,7 +54,7 @@ export default {
             zksync: false
         },
         zkSyncTestnet: {
-            chainId: 280,
+            chainId: 300,
             url: 'https://sepolia.era.zksync.dev/',
             ethNetwork: 'https://rpc.ankr.com/eth_sepolia',
             accounts: [process.env.PRIVATE_KEY],
@@ -171,35 +171,33 @@ export default {
                     optimizer: {
                         enabled: true,
                         runs: 200
+                    },
+                    metadata: {
+                        bytecodeHash: 'none'
                     }
-                },
-                eraVersion: '1.0.0'
+                }
             }
         ]
     },
     zksolc: {
-        version: '1.3.23',
+        version: '1.4.0',
         settings: {
             optimizer: {
                 enabled: true,
-                runs: 200
+                runs: 10
             },
-            isSystem: true
-            // libraries: {
-            //     'contracts/libraries/Clones.sol': {
-            //         /*
-            //          * zkSync Era Mainnet: 0x52cb8d348604aBB1720a713eADf3e4Afef650f93
-            //          * zkSync Era Testnet: 0x222C78A7CaDC3D63c72cE39F9A382B6aF075fC74
-            //          */
-            //         Clones: '0x52cb8d348604aBB1720a713eADf3e4Afef650f93'
-            //     }
-            // }
+            metadata: {
+                bytecodeHash: 'none'
+            }
         }
     },
     namedAccounts: {
         deployer: {
             default: 0
         }
+    },
+    sourcify: {
+        enabled: false
     },
     etherscan: {
         apiKey: {

@@ -1,5 +1,5 @@
 {
-  "network": "zkSync2-testnet",
-  "address": "0x2E94703808839D896404d305a75A4C4F4Cf42568",
-  "startBlock": 12731998
+  "network": "zksync-era-sepolia",
+  "address": "0x4f8FBEAF5232Aa2015AEE627B5FaE64b69Ac43b0",
+  "startBlock": 929179
 }

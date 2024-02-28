@@ -52,27 +52,13 @@ contract TTUDeployerLite is ITTUDeployer, Ownable, IVersionable {
         ITokenTableUnlockerV2 unlocker;
         ITTTrackerTokenV2 trackerToken;
         if (!isUpgradeable) {
-            futureToken = ITTFutureTokenV2(
-                Clones.clone(beaconManager.futureTokenBeacon().implementation())
-            );
-            futureToken.initialize(projectToken, isTransferable);
-            unlocker = ITokenTableUnlockerV2(
-                Clones.clone(beaconManager.unlockerBeacon().implementation())
-            );
-            unlocker.initialize(
+            (unlocker, futureToken, trackerToken) = _deployClonesAndInitialize(
                 projectToken,
-                address(futureToken),
-                address(this),
+                isTransferable,
                 isCancelable,
                 isHookable,
                 isWithdrawable
             );
-            trackerToken = ITTTrackerTokenV2(
-                Clones.clone(
-                    beaconManager.trackerTokenBeacon().implementation()
-                )
-            );
-            trackerToken.initialize(address(unlocker));
         } else {
             futureToken = ITTFutureTokenV2(
                 address(
@@ -126,7 +112,43 @@ contract TTUDeployerLite is ITTUDeployer, Ownable, IVersionable {
         return (unlocker, futureToken, trackerToken);
     }
 
-    function version() external pure returns (string memory) {
-        return "2.5.0";
+    function version() external pure virtual returns (string memory) {
+        return "2.5.7";
+    }
+
+    function _deployClonesAndInitialize(
+        address projectToken,
+        bool isTransferable,
+        bool isCancelable,
+        bool isHookable,
+        bool isWithdrawable
+    )
+        internal
+        virtual
+        returns (
+            ITokenTableUnlockerV2 unlocker,
+            ITTFutureTokenV2 futureToken,
+            ITTTrackerTokenV2 trackerToken
+        )
+    {
+        futureToken = ITTFutureTokenV2(
+            Clones.clone(beaconManager.futureTokenBeacon().implementation())
+        );
+        futureToken.initialize(projectToken, isTransferable);
+        unlocker = ITokenTableUnlockerV2(
+            Clones.clone(beaconManager.unlockerBeacon().implementation())
+        );
+        unlocker.initialize(
+            projectToken,
+            address(futureToken),
+            address(this),
+            isCancelable,
+            isHookable,
+            isWithdrawable
+        );
+        trackerToken = ITTTrackerTokenV2(
+            Clones.clone(beaconManager.trackerTokenBeacon().implementation())
+        );
+        trackerToken.initialize(address(unlocker));
     }
 }

@@ -1,27 +1,23 @@
 import {ethers} from 'hardhat'
 import {log} from '../config/logging'
-import {address} from '../deployments/zkSyncEra/TTUV2BeaconManager.json'
-import {TTUV2BeaconManager, UpgradeableBeacon} from '../typechain-types/index'
+import {TTUDeployerLiteZkSync} from '../typechain-types/index'
 
 async function main() {
-    const Factory = await ethers.getContractFactory('TTUV2BeaconManager')
-    const instance = Factory.attach(address) as TTUV2BeaconManager
+    const Factory = await ethers.getContractFactory('TTUDeployerLiteZkSync')
+    const instance = Factory.attach(
+        '0x4f8FBEAF5232Aa2015AEE627B5FaE64b69Ac43b0'
+    ) as TTUDeployerLiteZkSync
 
-    const BeaconProxyFactory =
-        await ethers.getContractFactory('UpgradeableBeacon')
-    const unlockerBeacon = BeaconProxyFactory.attach(
-        await instance.unlockerBeacon()
-    ) as UpgradeableBeacon
-    const ftBeacon = BeaconProxyFactory.attach(
-        await instance.futureTokenBeacon()
-    ) as UpgradeableBeacon
-    const ttBeacon = BeaconProxyFactory.attach(
-        await instance.trackerTokenBeacon()
-    ) as UpgradeableBeacon
-    log.info(
-        await unlockerBeacon.implementation(),
-        await ftBeacon.implementation(),
-        await ttBeacon.implementation()
+    const mockERC20TokenAddressZkSyncTestnet =
+        '0x0ad1Bd24CD3374b7Bb74CE494B093e5DE6F30A91'
+    await instance.deployTTSuite(
+        mockERC20TokenAddressZkSyncTestnet,
+        'test project id 0',
+        false,
+        true,
+        true,
+        true,
+        true
     )
 }
 

@@ -21,7 +21,11 @@ contract TTTrackerTokenV2 is ITTTrackerTokenV2, IERC20Metadata, Initializable {
     TokenTableUnlockerV2 public ttuInstance;
 
     constructor() {
-        if (block.chainid != 33133) {
+        if (
+            block.chainid != 33133 &&
+            block.chainid != 300 &&
+            block.chainid != 324
+        ) {
             _disableInitializers();
         }
     }

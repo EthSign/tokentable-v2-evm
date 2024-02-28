@@ -46,7 +46,11 @@ contract TTFutureTokenV2 is ITTFutureTokenV2, ERC721AQueryableUpgradeable {
 
     // solhint-disable-next-line ordering
     constructor() {
-        if (block.chainid != 33133) {
+        if (
+            block.chainid != 33133 &&
+            block.chainid != 300 &&
+            block.chainid != 324
+        ) {
             _dummyInitialize();
         }
     }

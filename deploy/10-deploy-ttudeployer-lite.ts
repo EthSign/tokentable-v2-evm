@@ -38,12 +38,28 @@ const deployLite: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
         args: [],
         waitConfirmations: 1
     })
-    const deployerLiteDeploymentResult = await deploy('TTUDeployerLite', {
-        from: deployer,
-        log: true,
-        args: [],
-        waitConfirmations: 1
-    })
+
+    let deployerLiteDeploymentResult
+    if (
+        hre.network.config.chainId === 300 ||
+        hre.network.config.chainId === 324
+    ) {
+        log.info('Deploying zkSync...')
+        deployerLiteDeploymentResult = await deploy('TTUDeployerLiteZkSync', {
+            from: deployer,
+            log: true,
+            args: [],
+            waitConfirmations: 1
+        })
+    } else {
+        deployerLiteDeploymentResult = await deploy('TTUDeployerLite', {
+            from: deployer,
+            log: true,
+            args: [],
+            waitConfirmations: 1
+        })
+    }
+
     const beaconManagerDeploymentResult = await deploy('TTUV2BeaconManager', {
         from: deployer,
         log: true,

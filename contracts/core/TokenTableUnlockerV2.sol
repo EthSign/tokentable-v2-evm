@@ -61,7 +61,11 @@ contract TokenTableUnlockerV2 is
 
     // solhint-disable-next-line ordering
     constructor() {
-        if (block.chainid != 33133) {
+        if (
+            block.chainid != 33133 &&
+            block.chainid != 300 &&
+            block.chainid != 324
+        ) {
             _disableInitializers();
         }
     }
