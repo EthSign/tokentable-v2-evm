@@ -23,8 +23,8 @@ devDependencies:
     specifier: 1.1.4
     version: 1.1.4(hardhat@2.20.0)
   '@matterlabs/hardhat-zksync-verify':
-    specifier: 1.4.0
-    version: 1.4.0(@nomicfoundation/hardhat-verify@2.0.4)(ethers@6.11.1)(ts-node@10.9.2)(typescript@5.2.2)
+    specifier: 1.4.1
+    version: 1.4.1(@nomicfoundation/hardhat-verify@2.0.4)(ethers@6.11.1)(ts-node@10.9.2)(typescript@5.2.2)
   '@nomicfoundation/hardhat-toolbox':
     specifier: 4.0.0
     version: 4.0.0(@nomicfoundation/hardhat-chai-matchers@2.0.6)(@nomicfoundation/hardhat-ethers@3.0.5)(@nomicfoundation/hardhat-network-helpers@1.0.10)(@nomicfoundation/hardhat-verify@2.0.4)(@typechain/ethers-v6@0.5.1)(@typechain/hardhat@9.1.0)(@types/chai@4.3.11)(@types/mocha@10.0.6)(@types/node@20.8.7)(chai@4.4.1)(ethers@6.11.1)(hardhat-gas-reporter@1.0.10)(hardhat@2.20.0)(solidity-coverage@0.8.8)(ts-node@10.9.2)(typechain@8.3.2)(typescript@5.2.2)
@@ -71,8 +71,8 @@ devDependencies:
     specifier: 2.10.0
     version: 2.10.0(hardhat@2.20.0)
   hardhat-deploy:
-    specifier: ^0.11.43
-    version: 0.11.45
+    specifier: ^0.12.1
+    version: 0.12.1
   hardhat-gas-reporter:
     specifier: ^1.0.10
     version: 1.0.10(hardhat@2.20.0)
@@ -646,8 +646,8 @@ packages:
       - supports-color
     dev: true
 
-  /@matterlabs/hardhat-zksync-verify@1.4.0(@nomicfoundation/hardhat-verify@2.0.4)(ethers@6.11.1)(ts-node@10.9.2)(typescript@5.2.2):
-    resolution: {integrity: sha512-92mYB6AyZH0cT/rgegsvWx3N7wvbggcnEQBU7vdfSfEZ7ViTNr5SPtTJeWOVmnS4gvjZ42U42QMw5yX2P8ukbg==}
+  /@matterlabs/hardhat-zksync-verify@1.4.1(@nomicfoundation/hardhat-verify@2.0.4)(ethers@6.11.1)(ts-node@10.9.2)(typescript@5.2.2):
+    resolution: {integrity: sha512-tdkB2briSXSVewd+4g6uSoOJeQor0yrjqDvFzJJWI4MzU9xEq7vaORk/3Xa5FajTRN8yBcmTFaCoMa1XJMcwqw==}
     peerDependencies:
       '@nomicfoundation/hardhat-verify': ^2.0.0
     dependencies:
@@ -3854,8 +3854,8 @@ packages:
       strip-ansi: 6.0.1
     dev: true
 
-  /hardhat-deploy@0.11.45:
-    resolution: {integrity: sha512-aC8UNaq3JcORnEUIwV945iJuvBwi65tjHVDU3v6mOcqik7WAzHVCJ7cwmkkipsHrWysrB5YvGF1q9S1vIph83w==}
+  /hardhat-deploy@0.12.1:
+    resolution: {integrity: sha512-ayPJqBCElzPeiwdHUEV0rKQ6NvKStjQAxCqCPlsavQVaxl7uZUHt/d+XbLqglVFqOOpHHs6L9K4W1vxPbsOy5Q==}
     dependencies:
       '@ethersproject/abi': 5.7.0
       '@ethersproject/abstract-signer': 5.7.0
@@ -3880,7 +3880,7 @@ packages:
       match-all: 1.2.6
       murmur-128: 0.2.1
       qs: 6.11.2
-      zksync-web3: 0.14.4(ethers@5.7.2)
+      zksync-ethers: 5.4.0(ethers@5.7.2)
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -6727,19 +6727,18 @@ packages:
     engines: {node: '>=10'}
     dev: true
 
+  /zksync-ethers@5.4.0(ethers@5.7.2):
+    resolution: {integrity: sha512-UG6czQ/xGqe7iv/Pvs3r1W/ardflSUyCZ5ZbpINNunFArxVEPVobjNLNIJjD0ZRFnEi8LGXSnBPmBnurwk4FRQ==}
+    peerDependencies:
+      ethers: ~5.7.0
+    dependencies:
+      ethers: 5.7.2
+    dev: true
+
   /zksync-ethers@6.3.0(ethers@6.11.1):
     resolution: {integrity: sha512-ApQIJSFevxFNVQTO1MxkmXxmx9N0qZHNvMzjFvu5v40QPFGkpUt09pY/WHy3b5BlsXzybQ3q2YnHaz/c/TgilA==}
     peerDependencies:
       ethers: ^6.7.1
     dependencies:
       ethers: 6.11.1
-    dev: true
-
-  /zksync-web3@0.14.4(ethers@5.7.2):
-    resolution: {integrity: sha512-kYehMD/S6Uhe1g434UnaMN+sBr9nQm23Ywn0EUP5BfQCsbjcr3ORuS68PosZw8xUTu3pac7G6YMSnNHk+fwzvg==}
-    deprecated: This package has been deprecated in favor of zksync-ethers@5.0.0
-    peerDependencies:
-      ethers: ^5.7.0
-    dependencies:
-      ethers: 5.7.2
     dev: true

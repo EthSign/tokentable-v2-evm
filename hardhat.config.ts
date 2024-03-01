@@ -209,7 +209,8 @@ export default {
             mainnet: process.env.ETHERSCAN_KEY,
             zetachainTestnet: process.env.ZETA_KEY,
             zetachain: process.env.ZETA_KEY,
-            scrollSepolia: process.env.SCROLL_API_KEY!
+            scrollSepolia: process.env.SCROLL_API_KEY!,
+            scroll: process.env.SCROLL_API_KEY!
         },
         customChains: [
             {
@@ -259,6 +260,14 @@ export default {
                 urls: {
                     apiURL: 'https://api-sepolia.scrollscan.com/api',
                     browserURL: 'https://sepolia.scrollscan.com/'
+                }
+            },
+            {
+                network: 'scroll',
+                chainId: 534352,
+                urls: {
+                    apiURL: 'https://api.scrollscan.com/api',
+                    browserURL: 'https://scrollscan.com/'
                 }
             }
         ]
