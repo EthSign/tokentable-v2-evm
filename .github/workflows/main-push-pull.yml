@@ -53,21 +53,27 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
-      - uses: actions/cache@v3
-        name: Set up cache
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2.4.0
         with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          version: 8
+          run_install: false
 
-      - name: Set up node
-        uses: actions/setup-node@v3
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
         with:
-          node-version: '20'
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: npm i
+        run: pnpm i --frozen-lockfile
 
       - name: Build application
         run: npm run build
@@ -83,21 +89,27 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
-      - uses: actions/cache@v3
-        name: Set up cache
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2.4.0
         with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          version: 8
+          run_install: false
 
-      - name: Set up node
-        uses: actions/setup-node@v3
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
         with:
-          node-version: '20'
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: npm i
+        run: pnpm i --frozen-lockfile
 
       - name: Build application
         run: npm run build
@@ -114,21 +126,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - uses: actions/cache@v3
-        name: Set up cache
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2.4.0
         with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          version: 8
+          run_install: false
 
-      - name: Set up node
-        uses: actions/setup-node@v3
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
         with:
-          node-version: '20'
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: npm i
+        run: pnpm i --frozen-lockfile
 
       - uses: actions/setup-python@v4
         with:
