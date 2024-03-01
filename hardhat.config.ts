@@ -90,6 +90,14 @@ export default {
             saveDeployments: true,
             zksync: false
         },
+        polygon: {
+            url: 'https://rpc.ankr.com/polygon',
+            chainId: 137,
+            loggingEnabled: true,
+            accounts: [process.env.PRIVATE_KEY],
+            saveDeployments: true,
+            zksync: false
+        },
         mumbai: {
             url: 'https://rpc.ankr.com/polygon_mumbai',
             chainId: 80001,
@@ -201,6 +209,7 @@ export default {
     },
     etherscan: {
         apiKey: {
+            polygon: process.env.POLYGONSCAN_KEY,
             polygonMumbai: process.env.POLYGONSCAN_KEY,
             mantaPacific: process.env.MANTAPACIFIC_KEY,
             mantaPacificTestnet: process.env.MANTAPACIFIC_TEST_KEY,
